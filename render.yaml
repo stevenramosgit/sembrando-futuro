@@ -1,0 +1,25 @@
+# Despliegue en Render (plan gratuito). Sin Docker: Render ejecuta Uvicorn directamente
+# y FastAPI sirve también la PWA (carpeta ../frontend).
+services:
+  - type: web
+    name: sembrando-futuro
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && alembic upgrade head && python -m app.cli cargar_semilla
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/salud
+    envVars:
+      - { key: PYTHON_VERSION, value: 3.14.7 }
+      - { key: ENTORNO, value: produccion }
+      - { key: CLAVE_SECRETA, generateValue: true }
+      - { key: DB_HOST, sync: false }        # Aiven MySQL
+      - { key: DB_PORT, sync: false }
+      - { key: DB_NAME, sync: false }
+      - { key: DB_USER, sync: false }
+      - { key: DB_PASSWORD, sync: false }
+      - { key: DB_SSL_CA, value: ca.pem }    # certificado de Aiven guardado en backend/ca.pem
+      - { key: PROXY_CONFIABLE, value: si }
+      - { key: BREVO_API_KEY, sync: false }
+      - { key: CORREO_REMITENTE, sync: false }
+      - { key: DOMINIO, sync: false }
