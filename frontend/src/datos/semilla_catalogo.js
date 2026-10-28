@@ -1,0 +1,91 @@
+// Catálogo inicial: viaja dentro de la aplicación para que la primera vez no haga falta internet (documento 19).
+// Copia de datos/semilla_catalogo.json (3 cultivos con ficha técnica). C-01 lo actualiza cuando el administrador cambia una ficha.
+export const SEMILLA = {
+  "version": 2,
+  "cultivos": [
+    {
+      "codigo": "CAFE",
+      "nombre": "Café",
+      "unidad_comercial": "carga (125 kg de café pergamino seco)",
+      "distancia_min_m": 1.0,
+      "distancia_max_m": 2.0,
+      "marcos_permitidos": [
+        "cuadrado",
+        "rectangular",
+        "tresbolillo"
+      ],
+      "advertencia_menor": "Las matas quedan muy juntas: compiten por luz, agua y nutrientes, y la producción puede bajar.",
+      "advertencia_mayor": "Las matas quedan muy separadas: se desaprovecha el terreno y baja la producción por hectárea.",
+      "fuente_tecnica": "Cenicafé (Centro Nacional de Investigaciones de Café) y Federación Nacional de Cafeteros",
+      "ficha_tecnica": {
+        "base_plantas": 1000,
+        "costo_hoyado_cop": 300,
+        "costo_colino_cop": 100,
+        "insumo_anual_cop": 830,
+        "jornales_limpieza_anio": 4,
+        "jornales_riego_anio": 3,
+        "datos_extra": {
+          "origen": "Ejemplo de referencia de la asignatura (café)",
+          "estado": "POR_CONFIRMAR",
+          "nota": "Costos de hoyado, colino e insumos en pesos por planta; jornales por cada 1.000 plantas al año. Confirmar unidades y valores con una fuente técnica antes de usarlos."
+        }
+      }
+    },
+    {
+      "codigo": "PLATANO",
+      "nombre": "Plátano",
+      "unidad_comercial": "racimo",
+      "distancia_min_m": 2.0,
+      "distancia_max_m": 3.5,
+      "marcos_permitidos": [
+        "cuadrado",
+        "rectangular",
+        "tresbolillo"
+      ],
+      "advertencia_menor": "Las matas quedan muy juntas: compiten por luz, agua y nutrientes, y la producción puede bajar.",
+      "advertencia_mayor": "Las matas quedan muy separadas: se desaprovecha el terreno y baja la producción por hectárea.",
+      "fuente_tecnica": "ICA (Instituto Colombiano Agropecuario) y Agrosavia",
+      "ficha_tecnica": {
+        "base_plantas": 1000,
+        "costo_hoyado_cop": 300,
+        "costo_colino_cop": 700,
+        "insumo_anual_cop": 900,
+        "jornales_limpieza_anio": 4,
+        "jornales_riego_anio": 3,
+        "datos_extra": {
+          "origen": "Valores aproximados del equipo, no oficiales",
+          "estado": "POR_VALIDAR",
+          "nota": "Por validar con una fuente técnica (ICA, Agrosavia)."
+        }
+      }
+    },
+    {
+      "codigo": "YUCA",
+      "nombre": "Yuca",
+      "unidad_comercial": "bulto (50 kg)",
+      "distancia_min_m": 0.8,
+      "distancia_max_m": 1.0,
+      "marcos_permitidos": [
+        "cuadrado",
+        "rectangular",
+        "tresbolillo"
+      ],
+      "advertencia_menor": "Las matas quedan muy juntas: compiten por luz, agua y nutrientes, y la producción puede bajar.",
+      "advertencia_mayor": "Las matas quedan muy separadas: se desaprovecha el terreno y baja la producción por hectárea.",
+      "fuente_tecnica": "Agrosavia (ficha de la variedad La Francesa: 1 m × 1 m, 10.000 plantas por hectárea) y CIAT (Castro, 1980: 10.000 y 15.625 plantas por hectárea)",
+      "ficha_tecnica": {
+        "base_plantas": 1000,
+        "costo_hoyado_cop": 300,
+        "costo_colino_cop": 100,
+        "insumo_anual_cop": 400,
+        "jornales_limpieza_anio": 3,
+        "jornales_riego_anio": 0,
+        "datos_extra": {
+          "origen": "Valores aproximados del equipo, no oficiales",
+          "estado": "POR_VALIDAR",
+          "nota": "Por validar con una fuente técnica (Agrosavia, CIAT)."
+        }
+      }
+    }
+  ]
+};

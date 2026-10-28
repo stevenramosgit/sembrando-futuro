@@ -1,0 +1,395 @@
+<title>Prototipo Sembrando Futuro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Concepto: un teléfono real en el centro y, al lado, el panel de prueba del profesor (conexión, reloj simulado, correo simulado, reglas). */
+:root{--bg:#E9EFE7;--surface:#FFFFFF;--ink:#16241B;--muted:#4C5F52;--line:#C3D0C6;--primary:#1D6B44;--primary-ink:#FFFFFF;--soft:#E1EEE5;--warn-bg:#FFF1D0;--warn:#6F4400;--err:#A3221A;--err-bg:#FDE8E5;--frame:#101512;--shadow:0 18px 50px rgba(16,30,20,.22);--font:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C130E;--surface:#16221A;--ink:#E6F0E8;--muted:#9FB3A5;--line:#2C4033;--primary:#52B882;--primary-ink:#08160E;--soft:#1E3226;--warn-bg:#3A2B0B;--warn:#F2C46D;--err:#FF9A90;--err-bg:#3A1714;--frame:#050806;--shadow:0 18px 50px rgba(0,0,0,.6);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0C130E;--surface:#16221A;--ink:#E6F0E8;--muted:#9FB3A5;--line:#2C4033;--primary:#52B882;--primary-ink:#08160E;--soft:#1E3226;--warn-bg:#3A2B0B;--warn:#F2C46D;--err:#FF9A90;--err-bg:#3A1714;--frame:#050806;--shadow:0 18px 50px rgba(0,0,0,.6);color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.4;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:20px}
+.wrap{display:flex;gap:28px;justify-content:center;align-items:flex-start;flex-wrap:wrap;max-width:1100px;margin:0 auto}
+.phone{position:sticky;top:16px;width:390px;max-width:100%;background:var(--frame);border-radius:38px;padding:11px;box-shadow:var(--shadow);flex:0 0 auto}
+.screen{font-size:18px;background:var(--bg);border-radius:28px;height:760px;max-height:calc(100vh - 60px);min-height:620px;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.appbar{background:var(--primary);color:var(--primary-ink);display:flex;align-items:center;gap:10px;padding:12px 14px;min-height:56px}
+.appbar h1{font-size:19px;margin:0;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.back{background:transparent;border:0;color:inherit;font:inherit;font-size:26px;line-height:1;min-width:48px;min-height:48px;margin:-8px -8px -8px -10px;cursor:pointer}
+.pill{font-size:14px;font-weight:700;border:2px solid currentColor;border-radius:99px;padding:3px 10px;white-space:nowrap;background:transparent;color:inherit;cursor:pointer;min-height:32px}
+.content{flex:1;overflow-y:auto;padding:16px 16px 20px}
+.nav{display:grid;grid-template-columns:repeat(5,1fr);border-top:2px solid var(--line);background:var(--surface)}
+.nav button{background:none;border:0;color:var(--ink);font:inherit;font-size:14px;font-weight:700;padding:8px 2px;min-height:56px;cursor:pointer;border-top:4px solid transparent}
+.nav button[aria-current="page"]{color:var(--primary);border-top-color:var(--primary);background:var(--soft)}
+h2{font-size:24px;margin:0 0 6px;line-height:1.2;text-wrap:balance}
+p{margin:0 0 12px}
+.muted{color:var(--muted);font-size:15px}
+label{display:block;font-weight:700;font-size:17px;margin:0 0 4px}
+.field{margin-bottom:14px}
+input[type=text],input[type=password],input[type=email],input[type=tel],input[type=number],select,textarea{width:100%;font:inherit;font-size:18px;min-height:52px;padding:8px 12px;border:2px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+input:focus,select:focus,button:focus-visible,textarea:focus{outline:3px solid var(--primary);outline-offset:2px}
+.field.bad input,.field.bad select{border-color:var(--err);border-width:3px}
+.err{color:var(--err);font-weight:700;font-size:15px;margin-top:5px;display:flex;gap:6px}
+.err::before{content:"!";display:inline-flex;align-items:center;justify-content:center;flex:0 0 18px;height:18px;border-radius:50%;background:var(--err);color:var(--surface);font-size:12px;margin-top:1px}
+.hint{color:var(--muted);font-size:14px;margin-top:4px}
+.btn{display:block;width:100%;min-height:52px;border-radius:12px;border:2px solid var(--primary);background:var(--primary);color:var(--primary-ink);font:inherit;font-size:18px;font-weight:700;padding:10px 14px;cursor:pointer;margin:0 0 10px}
+.btn.sec{background:transparent;color:var(--primary)}
+.btn.danger{background:transparent;color:var(--err);border-color:var(--err)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.linkbtn{background:none;border:0;color:var(--primary);font:inherit;font-weight:700;text-decoration:underline;padding:12px 6px;min-height:48px;cursor:pointer;display:block;margin:0 auto}
+.card{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.card h3{margin:0 0 6px;font-size:18px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:3px 0}
+.kv b{font-variant-numeric:tabular-nums;text-align:right}
+.card.hl{background:var(--soft);border-color:var(--primary)}
+.banner{border:2px solid var(--line);border-left-width:8px;border-radius:10px;padding:10px 12px;margin-bottom:12px;background:var(--surface);font-size:17px}
+.banner.warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.banner.bad{background:var(--err-bg);color:var(--err);border-color:var(--err)}
+.banner.ok{background:var(--soft);border-color:var(--primary)}
+.row{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line)}
+.row .grow{flex:1;min-width:0}.row b{font-variant-numeric:tabular-nums}
+.row button.tap{all:unset;display:flex;flex:1;align-items:center;gap:10px;cursor:pointer;min-height:48px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;margin-bottom:14px}
+.seg button{min-height:48px;border-radius:10px;border:2px solid var(--primary);background:transparent;color:var(--primary);font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--primary);color:var(--primary-ink)}
+.chk{display:flex;gap:10px;align-items:flex-start;margin-bottom:6px}
+.chk input{width:28px;height:28px;margin:2px 0 0;accent-color:var(--primary);flex:0 0 28px}
+.chk label{font-weight:400;font-size:17px}
+.badge{font-size:14px;font-weight:700;border-radius:6px;padding:2px 7px;border:1.5px solid var(--primary);color:var(--primary)}
+.badge.off{border-color:var(--muted);color:var(--muted)}
+.toast{position:absolute;left:12px;right:12px;bottom:72px;background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:17px;box-shadow:var(--shadow)}
+.toast button{background:none;border:2px solid currentColor;color:inherit;border-radius:8px;font:inherit;font-weight:700;padding:6px 10px;min-height:40px;cursor:pointer}
+.big{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.panel{flex:1 1 340px;max-width:460px;min-width:0;display:flex;flex-direction:column;gap:14px}
+.panel section{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:14px}
+.panel h3{margin:0 0 8px;font-size:17px}
+.panel .btns{display:flex;flex-wrap:wrap;gap:8px}
+.panel button{font:inherit;font-size:14px;font-weight:700;border-radius:8px;border:2px solid var(--primary);background:transparent;color:var(--primary);padding:6px 10px;min-height:40px;cursor:pointer}
+.panel button.on{background:var(--primary);color:var(--primary-ink)}
+.mail{border-top:1px solid var(--line);padding:8px 0;font-size:14px}
+.mail b{color:var(--primary)}
+.rules{font-size:13px;width:100%;border-collapse:collapse}
+.rules td,.rules th{border-bottom:1px solid var(--line);padding:5px 4px;text-align:left;vertical-align:top}
+.rules code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--soft);padding:1px 4px;border-radius:4px}
+.tablewrap{overflow-x:auto}
+.legal{white-space:pre-line;font-size:14px}
+@media (max-width:480px){.phone{padding:6px;border-radius:26px}.screen{border-radius:20px;height:calc(100vh - 40px)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<main class="wrap">
+ <div class="phone" aria-label="Teléfono de demostración"><div class="screen" id="screen"></div></div>
+ <aside class="panel" id="panel" aria-label="Panel de prueba"></aside>
+</main>
+<script>
+(()=>{"use strict";
+const VAL=[["V-01", "RF-02", "Registro", "Nombre", "2 a 60 caracteres; solo letras (con tildes y ñ), espacios, punto y guion; sin más de 3 caracteres iguales seguidos; no se aceptan datos basura ('0', '123', 'test')", "María Pérez", "aaaaa", "Escriba su nombre completo con letras (entre 2 y 60 caracteres)."], ["V-02", "RF-02", "Registro", "Ubicación", "3 a 60 caracteres con las mismas reglas de caracteres que el nombre", "Caloto, Cauca", "0", "Escriba el municipio o la vereda (entre 3 y 60 caracteres)."], ["V-03", "RF-02", "Registro", "Correo", "Formato RFC 5322 (por ejemplo nombre@correo.com) de hasta 254 caracteres; no distingue mayúsculas de minúsculas, por eso se guarda y se compara en minúsculas", "Maria@Correo.com", "0@0", "Escriba un correo válido, por ejemplo nombre@correo.com."], ["V-04", "RF-02", "Registro", "Confirmar correo", "Debe ser idéntico al correo, sin distinguir mayúsculas de minúsculas", "maria@correo.com", "maria@correo.co", "Los dos correos no coinciden."], ["V-05", "RF-02", "Registro", "Correo ya usado por una cuenta activa", "El correo no puede estar registrado", "ana@correo.com (nuevo)", "maria@correo.com (ya activo)", "Este correo ya está registrado. Inicie sesión."], ["V-06", "RF-02", "Registro", "Correo con cuenta pendiente", "Si la cuenta pendiente tiene menos de 24 horas, no se crea otra", "—", "maria@correo.com (pendiente)", "Este correo tiene una cuenta pendiente de activar. Revise su correo o intente de nuevo después de 24 horas."], ["V-07", "RF-02", "Registro", "Clave", "De 10 a 64 caracteres, solo letras sin tilde, números y símbolos; debe tener mayúscula, minúscula, número y al menos un símbolo de la lista !@#$%^&*()_+-=[]{}|;:,.<>?; sin espacios, sin secuencias simples ni partes del correo o del nombre", "Cafe#Cauca2026", "abcdefghij", "La clave debe tener de 10 a 64 caracteres, con mayúscula, minúscula, número y símbolo (sin espacios ni tildes)."], ["V-08", "RF-02", "Registro", "Autorización de datos (Ley 1581)", "La casilla debe estar marcada", "Marcada", "Sin marcar", "Debe aceptar el tratamiento de datos personales para registrarse."], ["V-09", "RF-02", "Código OTP", "Formato del código", "Exactamente 6 dígitos", "482915", "48A", "Escriba los 6 dígitos del código."], ["V-10", "RF-02", "Código OTP", "Código incorrecto", "Hasta 5 intentos por código; muestra los intentos restantes", "Código enviado", "Código distinto al enviado", "Código incorrecto. Le quedan N intentos."], ["V-11", "RF-02", "Código OTP", "Código vencido", "Vale 15 minutos desde el envío", "A los 14 min 59 s", "A los 15 min 01 s", "El código venció. Pida uno nuevo."], ["V-12", "RF-02", "Código OTP", "Intentos agotados", "Al 5.º intento fallido el código se invalida", "—", "6.º intento con el mismo código", "Demasiados intentos. Pida un código nuevo."], ["V-13", "RF-02", "Código OTP", "Espera entre reenvíos", "60 segundos entre un envío y el siguiente", "Reenvío a los 60 s", "Reenvío a los 30 s", "Espere N segundos para pedir otro código."], ["V-14", "RF-02", "Código OTP", "Máximo de reenvíos", "3 reenvíos por cuenta; cambiar el correo cuenta como un reenvío", "3.er reenvío", "4.º reenvío", "Llegó al máximo de 3 reenvíos. Intente de nuevo después de 24 horas."], ["V-15", "RF-02", "Código OTP", "Cuenta pendiente de más de 24 horas", "Se elimina automáticamente a las 24 horas", "Activar a las 23 h", "Activar a las 25 h", "La cuenta venció. Regístrese de nuevo."], ["V-16", "RF-03", "Inicio de sesión", "Correo y clave vacíos", "Ambos campos son obligatorios", "Ambos escritos", "Clave vacía", "Escriba su correo y su clave."], ["V-17", "RF-03", "Inicio de sesión", "Credenciales", "El correo (sin distinguir mayúsculas) y la clave deben coincidir con una cuenta", "Correo y clave correctos", "Clave equivocada", "Correo o clave incorrectos."], ["V-18", "RF-03", "Inicio de sesión", "Bloqueo por intentos", "5 intentos fallidos seguidos bloquean 15 minutos", "4.º intento fallido", "5.º intento fallido", "Cuenta bloqueada por 15 minutos. Intente de nuevo a las HH:MM."], ["V-19", "RF-03", "Inicio de sesión", "Cuenta pendiente", "La cuenta debe estar ACTIVA para iniciar sesión", "Cuenta activa", "Cuenta pendiente", "Su cuenta aún no está activada. Ingrese el código que llegó a su correo."], ["V-20", "RF-04", "Cerrar sesión", "Registros sin enviar", "Con registros PENDIENTES pide confirmación y los conserva; con un solo registro el texto dice «1 registro» y «Se conservará»", "Sin pendientes", "3 pendientes", "Tiene N registros sin enviar. Se conservarán en este dispositivo. ¿Cerrar sesión?"], ["V-21", "RF-01", "Servidor (comando crear_admin)", "Segundo administrador", "Solo puede existir una cuenta ADMIN", "Primer administrador", "Segundo administrador", "Ya existe un administrador."], ["V-22", "RF-12", "Finca y ciclo", "Nombre de finca y de lote (opcional)", "2 a 60 caracteres con las reglas de caracteres del nombre", "Lote El Mirador", "0", "Escriba un nombre de 2 a 60 caracteres con letras."], ["V-23", "RF-12", "Finca y ciclo", "Regla retirada", "Desapareció con la tabla LOTE: el nombre del lote es solo un texto informativo del ciclo y puede repetirse", "—", "—", "(Regla retirada; no se usa)"], ["V-24", "RF-14", "Ciclo", "Área bruta", "De 0,0001 a 10.000 ha", "1,0", "10.000,0001", "El área debe estar entre 0,0001 y 10.000 hectáreas."], ["V-25", "RF-14", "Ciclo", "Pendiente", "De 0 a 100 %", "15", "101", "La pendiente debe estar entre 0 y 100 %."], ["V-26", "RF-13", "Ciclo", "Área no sembrable", "Mayor o igual a 0 y estrictamente menor que el área bruta", "0,1 ha con bruta 1,0", "1,0 ha con bruta 1,0", "El área no sembrable debe ser menor que el área bruta."], ["V-27", "RF-14", "Ciclo", "Cultivo obligatorio", "Debe elegirse un cultivo del catálogo; un ciclo trae al menos uno", "Café", "Sin cultivo", "Seleccione un cultivo."], ["V-28", "RF-14", "Ciclo, gastos, jornales e ingresos", "Formato de fecha", "Fecha que existe en el calendario, con formato día/mes/año (día y mes de 1 o 2 dígitos y año de 4)", "15/11/2026", "31/02/2026", "Escriba una fecha válida (día/mes/año)."], ["V-29", "RF-15", "Ciclo", "Fecha de cierre", "No puede ser anterior a la fecha de siembra ni posterior a hoy", "Igual a la siembra (con siembra de hoy o anterior)", "Un día antes de la siembra", "La fecha de cierre no puede ser anterior a la de siembra ni posterior a hoy."], ["V-30", "RF-15", "Ciclo", "Cierre sin ingresos", "Pide confirmación adicional; si confirma, cierra", "Ciclo con ingresos", "Ciclo sin ingresos", "Este ciclo no tiene ingresos. ¿Desea cerrarlo de todos modos?"], ["V-31", "RF-15", "Ciclo", "Registro en ciclo cerrado", "Un ciclo CERRADO no admite nuevos registros", "Ciclo activo", "Ciclo cerrado", "Este ciclo está cerrado y no admite nuevos registros."], ["V-32", "RF-18", "Cálculo de matas", "Marco de siembra", "Obligatorio: cuadrado, rectangular o tresbolillo", "Cuadrado", "Sin elegir", "Elija el marco de siembra."], ["V-33", "RF-18", "Cálculo de matas", "Distancias", "De 0,01 a 10 metros", "1,5", "0", "La distancia debe estar entre 0,01 y 10 metros."], ["V-34", "RF-18", "Cálculo de matas", "Distancia fuera del rango del cultivo", "Es una advertencia: no bloquea el cálculo", "Dentro del rango", "Menor que el mínimo del catálogo", "Advertencia: la distancia está fuera del rango recomendado (mín.–máx. m). Puede continuar, pero la producción puede verse afectada."], ["V-35", "RF-23", "Gasto", "Valor", "De $1 a $50.000.000, solo números", "150000", "50000001", "El valor debe estar entre $1 y $50.000.000."], ["V-36", "RF-23", "Gasto", "Formato del valor", "Solo dígitos; se rechazan letras, signos y notación científica", "150000", "1e5", "Escriba solo números."], ["V-37", "RF-23", "Gasto", "Categoría", "Obligatoria: semillas, abonos, agroquímicos, herramientas, transporte u otros", "Abonos", "Sin elegir", "Elija una categoría."], ["V-38", "RF-23", "Gasto", "Observaciones", "Hasta 150 caracteres; solo letras, números, espacios y los signos . , -", "Abono para el lote 1", "Texto de 151 caracteres", "Escriba máximo 150 caracteres, solo con letras, números y los signos . , -"], ["V-39", "RF-24", "Jornales", "Número de jornales", "De 0,5 a 999, de medio en medio", "1,5", "1,25", "Los jornales deben estar entre 0,5 y 999, de medio en medio."], ["V-40", "RF-24", "Jornales", "Valor diario", "Mayor que $0 y máximo $50.000.000", "60000", "0", "El valor del jornal debe ser mayor que $0."], ["V-41", "RF-25", "Ingreso", "Cantidad", "De 0,1 a 10.000 en la unidad comercial del cultivo", "25", "10001", "La cantidad debe estar entre 0,1 y 10.000."], ["V-42", "RF-25", "Ingreso", "Precio unitario", "De $1 a $50.000.000", "180000", "0", "El precio debe estar entre $1 y $50.000.000."], ["V-43", "RF-27", "Editar o eliminar", "Deshacer", "Disponible 10 segundos después de eliminar", "A los 10 s", "A los 11 s", "Ya no se puede deshacer."], ["V-44", "RF-36", "Sincronización", "Sin conexión", "Los datos se guardan en el dispositivo", "Con conexión", "Sin conexión", "Sin conexión: sus datos están guardados en este dispositivo y se enviarán solos."], ["V-45", "RF-36", "Sincronización", "Falla del servidor", "Los registros siguen PENDIENTES y se reintenta", "Envío correcto", "Error del servidor", "No pudimos enviar sus datos ahora. Lo intentaremos de nuevo."], ["V-46", "RF-36", "Sincronización", "Sesión vencida", "Pide iniciar sesión; los datos locales se conservan", "Sesión vigente", "Sesión de más de 30 días", "Su sesión venció. Ingrese de nuevo; sus datos siguen guardados."], ["V-47", "RF-23", "Gasto, jornales e ingreso", "Fecha del registro", "No puede ser posterior a hoy ni anterior a la fecha de siembra del ciclo (RF-23, RF-24 y RF-25)", "Hoy", "Mañana", "La fecha no puede ser posterior a hoy ni anterior a la siembra del ciclo."], ["V-48", "RF-14", "Ciclo", "Rango de la fecha de siembra", "Entre el 01/01/2020 y un año después de hoy", "15/11/2026", "01/01/2019", "La fecha de siembra debe estar entre el 01/01/2020 y un año después de hoy."], ["V-49", "RF-14", "Ciclo", "Vigencia del ciclo en años", "Opcional; entero de 1 a 50 años", "7", "51 o 2,5", "La vigencia debe ser un número entero de años entre 1 y 50."], ["V-50", "RF-14", "Ciclo", "Cultivo repetido en el ciclo", "Un cultivo solo puede estar una vez en el mismo ciclo", "Plátano (nuevo en el ciclo)", "Café (ya está en el ciclo)", "Este cultivo ya está en el ciclo."]], CAT=[{"codigo": "CAFE", "nombre": "Café", "unidad_comercial": "carga (125 kg de café pergamino seco)", "distancia_min_m": 1.0, "distancia_max_m": 2.0, "marcos_permitidos": ["cuadrado", "rectangular", "tresbolillo"], "advertencia_menor": "Las matas quedan muy juntas: compiten por luz, agua y nutrientes, y la producción puede bajar.", "advertencia_mayor": "Las matas quedan muy separadas: se desaprovecha el terreno y baja la producción por hectárea.", "fuente_tecnica": "Cenicafé (Centro Nacional de Investigaciones de Café) y Federación Nacional de Cafeteros", "ficha_tecnica": {"base_plantas": 1000, "costo_hoyado_cop": 300, "costo_colino_cop": 100, "insumo_anual_cop": 830, "jornales_limpieza_anio": 4, "jornales_riego_anio": 3, "datos_extra": {"origen": "Ejemplo de referencia de la asignatura (café)", "estado": "POR_CONFIRMAR", "nota": "Costos de hoyado, colino e insumos en pesos por planta; jornales por cada 1.000 plantas al año. Confirmar unidades y valores con una fuente técnica antes de usarlos."}}}, {"codigo": "PLATANO", "nombre": "Plátano", "unidad_comercial": "racimo", "distancia_min_m": 2.0, "distancia_max_m": 3.5, "marcos_permitidos": ["cuadrado", "rectangular", "tresbolillo"], "advertencia_menor": "Las matas quedan muy juntas: compiten por luz, agua y nutrientes, y la producción puede bajar.", "advertencia_mayor": "Las matas quedan muy separadas: se desaprovecha el terreno y baja la producción por hectárea.", "fuente_tecnica": "ICA (Instituto Colombiano Agropecuario) y Agrosavia", "ficha_tecnica": {"base_plantas": 1000, "costo_hoyado_cop": 300, "costo_colino_cop": 700, "insumo_anual_cop": 900, "jornales_limpieza_anio": 4, "jornales_riego_anio": 3, "datos_extra": {"origen": "Valores aproximados del equipo, no oficiales", "estado": "POR_VALIDAR", "nota": "Por validar con una fuente técnica (ICA, Agrosavia)."}}}, {"codigo": "YUCA", "nombre": "Yuca", "unidad_comercial": "bulto (50 kg)", "distancia_min_m": 0.8, "distancia_max_m": 1.0, "marcos_permitidos": ["cuadrado", "rectangular", "tresbolillo"], "advertencia_menor": "Las matas quedan muy juntas: compiten por luz, agua y nutrientes, y la producción puede bajar.", "advertencia_mayor": "Las matas quedan muy separadas: se desaprovecha el terreno y baja la producción por hectárea.", "fuente_tecnica": "Agrosavia (ficha de la variedad La Francesa: 1 m × 1 m, 10.000 plantas por hectárea) y CIAT (Castro, 1980: 10.000 y 15.625 plantas por hectárea)", "ficha_tecnica": {"base_plantas": 1000, "costo_hoyado_cop": 300, "costo_colino_cop": 100, "insumo_anual_cop": 400, "jornales_limpieza_anio": 3, "jornales_riego_anio": 0, "datos_extra": {"origen": "Valores aproximados del equipo, no oficiales", "estado": "POR_VALIDAR", "nota": "Por validar con una fuente técnica (Agrosavia, CIAT)."}}}], DP={"usuarios": [{"id": "U-01", "nombre": "María Pérez", "ubicacion": "Caloto, Cauca", "correo": "maria.perez@correo.com", "clave": "Siembra#2026a", "estado": "ACTIVA", "nota": "Usuario principal de las pruebas"}, {"id": "U-02", "nombre": "Pedro Gómez", "ubicacion": "Morales, Cauca", "correo": "pedro.gomez@correo.com", "clave": "Cultivo#2026b", "estado": "PENDIENTE", "nota": "Creada hace 2 horas; código 482915 vigente; 0 reenvíos"}, {"id": "U-03", "nombre": "Luz Mena", "ubicacion": "Betulia, Cauca", "correo": "luz.mena@correo.com", "clave": "Cosecha#2026c", "estado": "PENDIENTE", "nota": "Creada hace 25 horas; la limpieza la elimina y libera el correo"}, {"id": "U-04", "nombre": "Carlos Ruiz", "ubicacion": "Caloto, Cauca", "correo": "carlos.ruiz@correo.com", "clave": "Tierra#2026d", "estado": "ACTIVA", "nota": "5 intentos fallidos; bloqueada 15 minutos"}, {"id": "U-05", "nombre": "Ana Torres", "ubicacion": "Santander de Quilichao, Cauca", "correo": "ana.torres@correo.com", "clave": "Semilla#2026e", "estado": "PENDIENTE", "nota": "Ya usó los 3 reenvíos del código"}, {"id": "ADM-01", "nombre": "Administrador", "ubicacion": "-", "correo": "admin.proyecto@correo.com", "clave": "Cafe#Cauca2026", "estado": "ACTIVA", "nota": "Creado con crear_admin; rol ADMIN"}], "fincas": [{"id": "F-01", "usuario": "U-01", "nombre": "La Esperanza"}, {"id": "F-02", "usuario": "U-01", "nombre": "El Mirador"}], "ciclos": [{"id": "C-01", "finca": "F-01", "nombre_lote": "Lote Alto", "pendiente_pct": 12, "area_bruta_ha": 1.0, "area_no_sembrable_ha": 0.1, "area_efectiva_ha": 0.9, "fecha_siembra": "2026-03-15", "vigencia_anios": 7, "estado": "ACTIVO", "fecha_cierre": null, "cultivos": [{"id": "CC-01", "cultivo": "CAFE", "marco": "cuadrado", "dist_a_m": 1.5}]}, {"id": "C-02", "finca": "F-01", "nombre_lote": "Lote Bajo", "pendiente_pct": 5, "area_bruta_ha": 0.8, "area_no_sembrable_ha": 0.0, "area_efectiva_ha": 0.8, "fecha_siembra": "2026-02-01", "vigencia_anios": 2, "estado": "ACTIVO", "fecha_cierre": null, "cultivos": [{"id": "CC-02", "cultivo": "PLATANO", "marco": "rectangular", "dist_a_m": 3.0, "dist_b_m": 2.0}]}, {"id": "C-03", "finca": "F-02", "nombre_lote": "Lote Alto", "pendiente_pct": 8, "area_bruta_ha": 0.6, "area_no_sembrable_ha": 0.0, "area_efectiva_ha": 0.6, "fecha_siembra": "2026-01-10", "vigencia_anios": 1, "estado": "CERRADO", "fecha_cierre": "2026-06-30", "cultivos": [{"id": "CC-03", "cultivo": "YUCA", "marco": "cuadrado", "dist_a_m": 1.0}]}], "gastos": [{"id": "G-01", "ciclo": "C-01", "fecha": "2026-04-12", "categoria": "abonos", "valor_cop": 100000, "observaciones": "Abono orgánico"}, {"id": "G-02", "ciclo": "C-03", "fecha": "2026-02-15", "categoria": "semillas", "valor_cop": 80000, "observaciones": "Estacas de yuca"}], "jornales": [{"id": "J-01", "ciclo": "C-01", "fecha": "2026-04-20", "jornales": 2, "valor_diario_cop": 25000}], "ingresos": [{"id": "I-01", "ciclo": "C-01", "fecha": "2026-09-10", "cantidad": 4, "precio_unitario_cop": 125000, "cultivo": "CAFE"}, {"id": "I-02", "ciclo": "C-03", "fecha": "2026-06-20", "cantidad": 8, "precio_unitario_cop": 25000, "cultivo": "YUCA"}]};
+const MSG={},VROW={};VAL.forEach(v=>{MSG[v[0]]=v[7];VROW[v[0]]=v});
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let skew=0;const now=()=>Date.now()+skew;
+const uid=()=>(crypto&&crypto.randomUUID?crypto.randomUUID():"id-"+Math.random().toString(16).slice(2)+Date.now());
+/* ---------- formato ---------- */
+const grp=s=>s.replace(/\B(?=(\d{3})+(?!\d))/g,".");
+const fmt=(n,d=0)=>{const neg=n<0;const [i,f]=Math.abs(n).toFixed(d).split(".");return (neg?"-":"")+grp(i)+(f?","+f:"")};
+const money=n=>"$ "+fmt(n,0);
+const rhu=x=>Math.floor(Math.round(x*1e6)/1e6+0.5);
+const pad=n=>String(n).padStart(2,"0");
+const dstr=t=>{const d=new Date(t);return pad(d.getDate())+"/"+pad(d.getMonth()+1)+"/"+d.getFullYear()};
+const iso2es=s=>s.split("-").reverse().join("/");
+const hhmm=t=>{const d=new Date(t);return pad(d.getHours())+":"+pad(d.getMinutes())};
+const parseDate=s=>{const m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((s||"").trim());if(!m)return null;const d=+m[1],mo=+m[2],y=+m[3];const dt=new Date(y,mo-1,d);if(dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d||y<1990||y>2100)return null;return dt};
+const hoyD=()=>{const t=new Date(now());return new Date(t.getFullYear(),t.getMonth(),t.getDate())};
+const parseDec=s=>{s=(s||"").trim();if(!/^\d+([.,]\d+)?$/.test(s))return null;return parseFloat(s.replace(",","."))};
+const parseInt0=s=>{s=(s||"").trim();return /^\d+$/.test(s)?parseInt(s,10):null};
+/* ---------- validaciones (Apéndice J) ---------- */
+const E=(c,x={})=>({c,m:MSG[c].replace("N",x.n??"N").replace("HH:MM",x.t??"HH:MM").replace("(mín.–máx. m)",x.r??"(mín.–máx. m)")});
+const DUMMY=["0","00","000","123","1234","12345","test","prueba","asdf","xxx","null","undefined","nada","ninguno"];
+const KEYB=["qwert","werty","asdfg","sdfgh","zxcvb","xcvbn","12345","23456","34567","abcde","bcdef"];
+const mono=s=>/(.)\1{3,}/i.test(s);
+const dummy=s=>{const l=s.toLowerCase();return DUMMY.includes(l)||KEYB.some(k=>l.includes(k))};
+const LET="A-Za-zÁÉÍÓÚÜÑáéíóúüñ";
+const nameOK=(s,min,max,comma)=>{s=s.trim();if(s.length<min||s.length>max)return false;const re=new RegExp("^["+LET+"][" +LET+" .\\-"+(comma?",":"")+"]*$");if(!re.test(s))return false;if(mono(s)||dummy(s))return false;return true};
+const vNombre=s=>nameOK(s,2,60,false)?null:E("V-01");
+const vUbic=s=>nameOK(s,3,60,true)?null:E("V-02");
+const vLugar=s=>nameOK(s,2,60,false)?null:E("V-22");
+const vMail=s=>{s=s.trim();const ok=s.length<=254&&/^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/.test(s)&&!dummy(s.split("@")[0]);return ok?null:E("V-03")};
+const seqRun=s=>{const l=s.toLowerCase();let up=1,dn=1;for(let i=1;i<l.length;i++){const d=l.charCodeAt(i)-l.charCodeAt(i-1);up=d===1?up+1:1;dn=d===-1?dn+1:1;if(up>=5||dn>=5)return true}return false};
+const vClave=(p,mail,nom)=>{if(p.length<10||p.length>64||!/^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{}|;:,.<>?]+$/.test(p)||!/[A-Z]/.test(p)||!/[a-z]/.test(p)||!/\d/.test(p)||!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(p))return E("V-07");if(mono(p)||seqRun(p))return E("V-07");const loc=(mail||"").split("@")[0].toLowerCase();if(loc.length>=4&&p.toLowerCase().includes(loc))return E("V-07");for(const t of (nom||"").toLowerCase().split(/\s+/))if(t.length>=4&&p.toLowerCase().includes(t))return E("V-07");return null};
+const vObs=s=>{s=s.trim();if(s.length>150||(s&&!new RegExp("^["+LET+"0-9 .,\\-]+$").test(s)))return E("V-38");return null};
+/* ---------- datos ---------- */
+let DB,S;
+function seed(){
+ const t=now();
+ DB={users:[],mails:[],farms:[],cycles:[],exp:[],jor:[],inc:[],fails:{},lastSync:"ayer 18:20",nextFail:false,expireSession:false};
+ DP.usuarios.forEach(u=>{const o={id:u.id,nombre:u.nombre,ubic:u.ubicacion,correo:u.correo,clave:u.clave,estado:u.estado,rol:u.id==="ADM-01"?"ADMIN":"AGRICULTOR",creado:t,otp:null};
+  if(u.id==="U-02"){o.creado=t-2*3600e3;o.otp={code:"482915",enviado:t-60e3,expira:t+14*60e3,fallos:0,reenvios:0,bloqueado:false};DB.mails.push({a:u.correo,t,code:"482915"})}
+  if(u.id==="U-03"){o.creado=t-25*3600e3;o.otp={code:"111222",enviado:t-25*3600e3,expira:t-25*3600e3+9e5,fallos:0,reenvios:0,bloqueado:false}}
+  if(u.id==="U-05"){o.creado=t-3600e3;o.otp={code:"333444",enviado:t-5*60e3,expira:t+10*60e3,fallos:0,reenvios:3,bloqueado:false}}
+  if(u.id==="U-04"){DB.fails[u.correo]={n:5,hasta:t+15*60e3}}
+  DB.users.push(o)});
+ DP.fincas.forEach(f=>DB.farms.push({id:f.id,u:f.usuario,nombre:f.nombre,sync:"OK"}));
+ DP.ciclos.forEach(c=>DB.cycles.push({id:c.id,f:c.finca,nombre:c.nombre_lote||"",bruta:c.area_bruta_ha,pend:c.pendiente_pct,nosemb:c.area_no_sembrable_ha,efect:c.area_efectiva_ha,vig:c.vigencia_anios||null,fecha:new Date(c.fecha_siembra+"T12:00:00").getTime(),estado:c.estado,cierre:c.fecha_cierre?new Date(c.fecha_cierre+"T12:00:00").getTime():null,cs:c.cultivos.map(x=>({id:x.id,cult:x.cultivo,marco:x.marco,a:x.dist_a_m,b:x.dist_b_m||null})),sync:"OK"}));
+ DP.gastos.forEach(g=>DB.exp.push({id:g.id,c:g.ciclo,fecha:new Date(g.fecha+"T12:00:00").getTime(),cat:g.categoria,valor:g.valor_cop,obs:g.observaciones,sync:"OK"}));
+ DP.jornales.forEach(j=>DB.jor.push({id:j.id,c:j.ciclo,fecha:new Date(j.fecha+"T12:00:00").getTime(),n:j.jornales,valor:j.valor_diario_cop,sync:"OK"}));
+ DP.ingresos.forEach(i=>DB.inc.push({id:i.id,c:i.ciclo,cult:i.cultivo,fecha:new Date(i.fecha+"T12:00:00").getTime(),q:i.cantidad,precio:i.precio_unitario_cop,sync:"OK"}));
+ S={screen:"p01",stack:[],user:null,online:true,f:{},e:{},ctx:{},toast:null,busy:false,codes:true,sel:{farm:null,cycle:null},banner:null};
+}
+const cult=c=>CAT.find(x=>x.codigo===c);
+const semaforo=c=>{if(!c.vig)return null;const fin=new Date(c.fecha);fin.setFullYear(fin.getFullYear()+c.vig);const tot=fin.getTime()-c.fecha,rest=fin.getTime()-now();if(rest<=0)return {k:"ROJO",pct:0};const p=rest/tot*100;return {k:p>50?"VERDE":p>=20?"AMARILLO":"ROJO",pct:p}};
+const cname=c=>c.cs.map(x=>cult(x.cult).nombre).join(" y ");
+const mataC=(c,x)=>x.marco?rhu(nHa(x.marco,x.a,x.b)*c.efect):null;
+const estim=(c,x)=>{const f=cult(x.cult).ficha_tecnica,m=mataC(c,x);if(!f||m===null)return null;return {siembra:Math.round(m*(f.costo_hoyado_cop+f.costo_colino_cop)),insumos:Math.round(m*f.insumo_anual_cop),jornales:Math.round((f.jornales_limpieza_anio+f.jornales_riego_anio)*m/f.base_plantas)}};
+const myFarms=()=>DB.farms.filter(f=>f.u===S.user.id);
+const myCycles=()=>DB.cycles.filter(c=>myFarms().some(f=>f.id===c.f));
+const farm=id=>DB.farms.find(f=>f.id===id), cyc=id=>DB.cycles.find(c=>c.id===id);
+const nHa=(m,a,b)=>m==="cuadrado"?10000/(a*a):m==="rectangular"?10000/(a*b):10000/(a*a*0.866025);
+const fin=cid=>{const g=DB.exp.filter(x=>x.c===cid).reduce((s,x)=>s+x.valor,0)+DB.jor.filter(x=>x.c===cid).reduce((s,x)=>s+x.n*x.valor,0);const i=DB.inc.filter(x=>x.c===cid).reduce((s,x)=>s+x.q*x.precio,0);const u=i-g;const c=cyc(cid);return{g,i,u,r:g>0?u/g*100:0,ha:c.efect>0?u/c.efect:0}};
+const pendCount=()=>[...DB.farms,...DB.cycles,...DB.exp,...DB.jor,...DB.inc].filter(x=>x.sync==="PENDIENTE").length;
+const touch=o=>{o.sync="PENDIENTE";trySync()};
+let syncT=null;
+function trySync(){if(!S.online||syncT)return;syncT=setTimeout(()=>{syncT=null;if(!S.online)return;if(DB.expireSession){DB.expireSession=false;S.f={};S.user=null;S.screen="p07";S.stack=[];S.banner={k:"warn",m:E("V-46").m};render();return}
+ if(DB.nextFail){DB.nextFail=false;S.banner={k:"warn",m:E("V-45").m};render();return}
+ [...DB.farms,...DB.cycles,...DB.exp,...DB.jor,...DB.inc].forEach(x=>{if(x.sync==="PENDIENTE")x.sync="OK"});DB.lastSync="hoy "+hhmm(now());render()},1500)}
+function tick(){const t=now();DB.users=DB.users.filter(u=>!(u.estado==="PENDIENTE"&&t-u.creado>24*3600e3));for(const k in DB.fails){if(DB.fails[k].hasta&&DB.fails[k].hasta<=t){DB.fails[k]={n:0,hasta:0}}}}
+function sendMail(u){u.otp.code=String(Math.floor(100000+Math.random()*900000));u.otp.enviado=now();u.otp.expira=now()+15*60e3;u.otp.fallos=0;u.otp.bloqueado=false;DB.mails.unshift({a:u.correo,t:now(),code:u.otp.code})}
+
+/* ---------- UI ---------- */
+const val=(id)=>S.f[id]??"";
+const codeTag=c=>S.codes&&c?` <span class="muted">(${c})</span>`:"";
+const fld=(id,label,o={})=>{const e=S.e[id];const v=o.value??val(id);let ctl;
+ if(o.opts)ctl=`<select id="${id}" data-f="${id}"${o.rerender?" data-rr":""}>${o.opts.map(x=>`<option value="${esc(x[0])}"${String(v)===String(x[0])?" selected":""}>${esc(x[1])}</option>`).join("")}</select>`;
+ else ctl=`<input id="${id}" data-f="${id}" type="${o.type||"text"}" value="${esc(v)}" placeholder="${esc(o.ph||"")}" autocomplete="${o.ac||"off"}"${o.im?` inputmode="${o.im}"`:""}${o.max?` maxlength="${o.max}"`:""}${e?` aria-invalid="true" aria-describedby="e-${id}"`:""}>`;
+ return `<div class="field${e?" bad":""}"><label for="${id}">${label}</label>${ctl}${e?`<div class="err" id="e-${id}" role="alert"><span>${esc(e.m)}${codeTag(e.c)}</span></div>`:o.hint?`<div class="hint">${o.hint}</div>`:""}</div>`};
+const btn=(act,txt,cls="",d="")=>`<button class="btn ${cls}" data-act="${act}" ${d}>${txt}</button>`;
+const banner=(k,m,c)=>`<div class="banner ${k}" role="alert">${esc(m)}${c?codeTag(c):""}</div>`;
+const kv=(a,b)=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`;
+const topBanner=()=>{const b=S.banner;return b?banner(b.k,b.m,b.c):""};
+const chk=(id,label)=>`<div class="chk"><input type="checkbox" id="${id}" data-f="${id}"${S.f[id]?" checked":""}><label for="${id}">${label}</label></div>`;
+const err1=(id)=>S.e[id]?`<div class="err" role="alert"><span>${esc(S.e[id].m)}${codeTag(S.e[id].c)}</span></div>`:"";
+const seg=(id,opts)=>`<div class="seg" role="group">${opts.map(o=>`<button type="button" data-act="seg" data-id="${id}" data-v="${o[0]}" aria-pressed="${val(id)===o[0]}">${o[1]}</button>`).join("")}</div>`;
+const cultOpts=(first)=>[["",first||"Elija un cultivo"],...CAT.map(c=>[c.codigo,c.nombre])];
+const CATS=["semillas","abonos","agroquímicos","herramientas","transporte","otros"];
+const cyLabel=c=>{const f=farm(c.f);return `${f.nombre} · ${c.nombre||"Ciclo"} · ${cname(c)}${c.estado==="CERRADO"?" (cerrado)":""}`};
+/* ---------- pantallas ---------- */
+const NAVS=[["p10","Inicio"],["p11","Fincas"],["p18","Calcular"],["p20","Finanzas"],["p16","Catálogo"]];
+const P={};
+P.p01=()=>({t:"Sembrando Futuro",back:0,h:`<div style="padding-top:28px"><h2>Cultive con cuentas claras</h2><p>Calcule cuántas matas siembra por hectárea y sepa cuánto gana en cada cosecha. Funciona sin internet.</p></div>${topBanner()}${btn("go:p07","Ingresar")}${btn("go:p02","Crear cuenta","sec")}<button class="linkbtn" data-act="go:p27">Política de datos y ayuda</button>`});
+P.p02=()=>({t:"Crear cuenta",h:`${topBanner()}${fld("nombre","Nombre completo",{ac:"name",max:80})}${fld("ubic","Ubicación (municipio o vereda)",{max:80})}${fld("correo","Correo",{type:"email",ac:"email"})}${fld("correo2","Confirmar correo",{type:"email"})}${fld("clave","Clave",{type:"password",ac:"new-password",hint:"De 10 a 64 caracteres con mayúscula, minúscula, número y símbolo (!@#$%^&*()_+-=[]{}|;:,.<>?). Sin espacios ni tildes."})}${chk("auth","Autorizo el tratamiento de mis datos personales (Ley 1581 de 2012). <a href=\"#\" data-act=\"go:p27\" style=\"color:var(--primary)\">Ver política</a>")}${err1("auth")}<div style="height:12px"></div>${btn("reg","Crear cuenta")}`});
+P.p04=()=>{const u=DB.users.find(x=>x.correo===S.ctx.email);const wait=u&&u.otp?Math.max(0,Math.ceil((u.otp.enviado+60e3-now())/1000)):0;const left=u&&u.otp?3-u.otp.reenvios:0;
+ return {t:"Verifique su correo",back:0,h:`<h2>Escriba el código</h2><p>Enviamos un código de 6 dígitos a <b>${esc(S.ctx.email||"")}</b>. Vale 15 minutos.</p>${topBanner()}${fld("otp","Código de 6 dígitos",{im:"numeric",max:8,ac:"one-time-code"})}${btn("otpv","Activar cuenta")}<p class="muted" id="wait">Reenvíos disponibles: ${left}.${wait?` Puede pedir otro código en ${Math.floor(wait/60)}:${pad(wait%60)}.`:""}</p>${btn("otpr","Reenviar código","sec",wait?"data-wait=1":"")}<button class="linkbtn" data-act="go:p06">Cambiar correo</button>`}};
+P.p06=()=>({t:"Cambiar correo",h:`<p>La cuenta aún no está activa. Escriba el correo correcto y le enviaremos un código nuevo. Cuenta como un reenvío.</p>${topBanner()}${fld("nmail","Correo nuevo",{type:"email"})}${fld("nmail2","Confirmar correo nuevo",{type:"email"})}${btn("chm","Enviar código nuevo")}${btn("back","Cancelar","sec")}`});
+P.p07=()=>({t:"Ingresar",back:0,h:`<div style="height:8px"></div>${topBanner()}${fld("lmail","Correo",{type:"email",ac:"email"})}${fld("lpass","Clave",{type:"password",ac:"current-password"})}${btn("login","Ingresar")}<button class="linkbtn" data-act="go:p02">Crear cuenta</button><p class="muted" style="text-align:center">Cuentas de prueba: maria.perez@correo.com / Siembra#2026a</p>`});
+P.p09=()=>({t:"Inicio",nav:0,h:`${topBanner()}<div style="padding-top:20px"><h2>Bienvenido a Sembrando Futuro</h2><p>Aún no tiene fincas. Registre la primera para empezar a calcular y a llevar sus cuentas.</p></div>${btn("go:p12","Registrar mi primera finca")}${btn("go:p16","Ver catálogo de cultivos","sec")}`});
+P.p10=()=>{const farms=myFarms(),cs=myCycles();if(!cs.length&&!farms.length)return P.p09();
+ if(!S.sel.farm||!farms.some(f=>f.id===S.sel.farm))S.sel.farm=farms[0]?.id;
+ const fc=cs.filter(c=>c.f===S.sel.farm);if(!S.sel.cycle||!fc.some(c=>c.id===S.sel.cycle))S.sel.cycle=(fc.find(c=>c.estado==="ACTIVO")||fc[0])?.id;
+ const c=cyc(S.sel.cycle);let body;
+ if(!c)body=`<div class="banner">Esta finca aún no tiene ciclos. Cree el primero desde Fincas.</div>${btn("go:p14","Nuevo ciclo")}`;
+ else{const m=fin(c.id),sm=semaforo(c);const sv=sm?kv("Vigencia ("+c.vig+(c.vig===1?" año":" años")+")",`<span class="badge ${sm.k==="VERDE"?"":"off"}">${sm.k}</span> <span class="muted">${fmt(sm.pct,0)} % restante</span>`):"";const mats=c.cs.map(x=>{const m2=mataC(c,x);return m2===null?"":kv("Matas de "+cult(x.cult).nombre.toLowerCase(),fmt(m2))}).join("");const ests=c.cs.map(x=>{const e=estim(c,x);return e?`<div class="card"><h3>Costos de referencia · ${esc(cult(x.cult).nombre)}</h3>${kv("Siembra inicial",money(e.siembra))}${kv("Insumos de un año",money(e.insumos))}${kv("Jornales al año",fmt(e.jornales))}<p class="muted" style="margin:6px 0 0">Valores orientativos de la ficha técnica.</p></div>`:""}).join("");
+  body=`<div class="card"><h3>Resumen del ciclo</h3>${kv("Cultivos",esc(cname(c)))}${kv("Área efectiva",fmt(c.efect,4)+" ha")}${mats}${kv("Gastos",money(m.g))}${kv("Ingresos",money(m.i))}${sv}</div><div class="card hl"><h3>Resultado</h3>${kv("Utilidad neta",money(m.u))}${kv("Rentabilidad",fmt(m.r,1)+" %")}${kv("Utilidad por hectárea",money(Math.round(m.ha)))}</div>${ests}${S.online?"":banner("warn",E("V-44").m,"V-44")}${pendCount()?`<div class="banner">Pendientes por enviar: ${pendCount()} ${pendCount()===1?"registro":"registros"}</div>`:""}${c.estado==="ACTIVO"?btn("go:p21","Registrar gasto")+btn("go:p15","Cerrar ciclo","sec"):`<div class="banner">Ciclo cerrado el ${dstr(c.cierre)}.</div>`}`}
+ return {t:"Inicio",nav:0,h:`${topBanner()}${fld("selFarm","Finca",{opts:farms.map(f=>[f.id,f.nombre]),value:S.sel.farm,rerender:1})}${fld("selCycle","Ciclo",{opts:fc.length?fc.map(x=>[x.id,cyLabel(x).split(" · ").slice(1).join(" · ")]):[["","Sin ciclos"]],value:S.sel.cycle,rerender:1})}${body}`}};
+P.p11=()=>{const farms=myFarms();let h=topBanner();
+ farms.forEach(f=>{const cs=DB.cycles.filter(c=>c.f===f.id);h+=`<div class="card"><h3>${esc(f.nombre)} <span class="muted">· ${fmt(cs.reduce((s,c)=>s+c.bruta,0),1)} ha</span></h3>`;
+  cs.forEach(c=>{const sm=semaforo(c);h+=`<div class="row"><div class="grow"><b>${esc(c.nombre||"Ciclo")}</b> <span class="badge ${c.estado==="ACTIVO"?"":"off"}">${c.estado}</span><div class="muted">${esc(cname(c))} · área efectiva ${fmt(c.efect,4)} ha${sm?" · "+sm.k:""}</div></div></div><div class="row" style="padding-left:14px"><button class="badge" data-act="area:${c.id}">Área real</button>${c.estado==="ACTIVO"?`<button class="badge" data-act="addcult:${c.id}">Agregar cultivo</button>`:""}<button class="badge" data-act="fin:${c.id}">Finanzas</button>${c.estado==="ACTIVO"?`<button class="badge" data-act="close:${c.id}">Cerrar</button>`:""}</div>`});
+  h+=`<div class="row"><button class="badge" data-act="newcy:${f.id}">Nuevo ciclo</button></div></div>`});
+ return {t:"Mis fincas",nav:1,h:h+btn("go:p12","Agregar finca")}};
+P.p12=()=>({t:"Nueva finca",h:`${topBanner()}${fld("fnom","Nombre de la finca",{hint:"De 2 a 60 caracteres."})}<p class="muted">Después de guardar la finca podrá crear su primer ciclo de cultivo.</p>${btn("savefarm","Guardar finca")}`});
+P.p13=()=>{const l=cyc(S.ctx.cy);const u=val("unit")||"m2";return {t:"Área efectiva",h:`${topBanner()}<div class="card"><h3>Ciclo ${esc(l.nombre||"sin nombre")}</h3>${kv("Área bruta",fmt(l.bruta,4)+" ha")}</div>${fld("unit","Unidad del área no sembrable",{opts:[["m2","m²"],["ha","hectáreas"],["plaza","plazas"]],value:u,rerender:1})}${fld("nosemb","Área no sembrable",{im:"decimal",hint:"1 ha = 10.000 m² = 1,5625 plazas (1 plaza = 0,64 ha)."})}<div class="card hl" id="prev13"></div>${btn("savearea","Guardar")}${btn("go:p11","Ahora no","sec")}`}};
+P.p14=()=>{const mc=val("marco");return {t:"Nuevo ciclo",h:`${topBanner()}${fld("cfinca","Finca",{opts:[["","Elija una finca"],...myFarms().map(f=>[f.id,f.nombre])]})}${fld("clnom","Nombre del lote (opcional)",{hint:"Solo es una referencia; puede repetirse."})}${fld("carea","Área bruta (ha)",{im:"decimal",hint:"De 0,0001 a 10.000 hectáreas."})}${fld("cpend","Pendiente (%)",{im:"decimal",hint:"De 0 a 100 %."})}${fld("cfecha","Fecha de siembra (día/mes/año)",{im:"numeric"})}${fld("cvig","Vigencia en años (opcional)",{im:"numeric",hint:"Entero de 1 a 50."})}${fld("ccult","Cultivo",{opts:cultOpts()})}<label>Marco de siembra (opcional)</label>${seg("marco",[["cuadrado","Cuadrado"],["rectangular","Rectangular"],["tresbolillo","Tresbolillo"]])}${mc?fld("ca",mc==="rectangular"?"Distancia entre surcos (m)":"Distancia entre matas (m)",{im:"decimal"}):""}${mc==="rectangular"?fld("cb","Distancia entre matas (m)",{im:"decimal"}):""}${btn("savecy","Iniciar ciclo")}`}};
+P.p28=()=>{const c=cyc(S.ctx.cy);const ya=c.cs.map(x=>x.cult);const am=val("amarco");return {t:"Agregar cultivo",h:`${topBanner()}<div class="card"><h3>${esc(c.nombre||"Ciclo")}</h3>${kv("Ya tiene",esc(cname(c)))}</div>${fld("acult","Cultivo",{opts:[["","Elija un cultivo"],...CAT.map(x=>[x.codigo,x.nombre])]})}<label>Marco de siembra (opcional)</label>${seg("amarco",[["cuadrado","Cuadrado"],["rectangular","Rectangular"],["tresbolillo","Tresbolillo"]])}${am?fld("aa",am==="rectangular"?"Distancia entre surcos (m)":"Distancia entre matas (m)",{im:"decimal"}):""}${am==="rectangular"?fld("ab","Distancia entre matas (m)",{im:"decimal"}):""}${btn("savecult","Agregar cultivo")}${btn("back","Cancelar","sec")}`}};
+P.p15=()=>{const c=cyc(S.ctx.cy),m=fin(c.id);if(S.ctx.done)return{t:"Ciclo cerrado",back:0,h:`<div class="banner ok">El ciclo se cerró el ${dstr(c.cierre)}. Ya no admite nuevos registros.</div><div class="card hl"><h3>Balance final</h3>${kv("Gastos",money(m.g))}${kv("Ingresos",money(m.i))}${kv("Utilidad neta",money(m.u))}${kv("Rentabilidad",fmt(m.r,1)+" %")}${kv("Utilidad por hectárea",money(Math.round(m.ha)))}</div>${btn("goroot:p10","Volver al inicio")}`};
+ return {t:"Cerrar ciclo",h:`${topBanner()}<div class="card"><h3>${esc(cyLabel(c))}</h3>${kv("Siembra",dstr(c.fecha))}${kv("Gastos",money(m.g))}${kv("Ingresos",money(m.i))}</div>${fld("cierre","Fecha de cierre (día/mes/año)",{im:"numeric"})}${S.ctx.ask?banner("warn",E("V-30").m,"V-30")+btn("closeyes","Sí, cerrar ciclo")+btn("back","Cancelar","sec"):btn("closego","Cerrar ciclo")+btn("back","Cancelar","sec")}`}};
+P.p16=()=>({t:"Catálogo",back:0,nav:4,h:`<p class="muted">Tres cultivos del norte del Cauca con su ficha técnica, disponibles sin internet.</p>`+CAT.map(c=>`<div class="row"><button class="tap" data-act="cult:${c.codigo}"><span class="grow"><b>${esc(c.nombre)}</b><span class="muted" style="display:block">Unidad: ${esc(c.unidad_comercial)}</span></span><span aria-hidden="true">›</span></button></div>`).join("")});
+P.p17=()=>{const c=cult(S.ctx.cult)||CAT[0];const mn=c.distancia_min_m,mx=c.distancia_max_m;
+ return {t:c.nombre,h:`<div class="card"><h3>Ficha técnica</h3>${kv("Distancia recomendada",`${fmt(mn,1)} a ${fmt(mx,1)} m`)}${kv("Marcos","Cuadrado, rectangular, tresbolillo")}${kv("Unidad comercial",esc(c.unidad_comercial))}</div>${(()=>{const f=c.ficha_tecnica;if(!f)return "";return `<div class="card"><h3>Costos de referencia (por ${fmt(f.base_plantas)} plantas)</h3>${kv("Hoyado (por planta)",money(f.costo_hoyado_cop))}${kv("Colino (por planta)",money(f.costo_colino_cop))}${kv("Insumos al año (por planta)",money(f.insumo_anual_cop))}${kv("Jornales de limpieza al año",fmt(f.jornales_limpieza_anio))}${kv("Jornales de riego al año",fmt(f.jornales_riego_anio))}</div>${f.datos_extra&&f.datos_extra.estado!=="CONFIRMADO"?`<p class="muted">Valores por validar con una fuente técnica.</p>`:""}`})()}<p class="muted">Fuente: ${esc(c.fuente_tecnica)}.</p>${btn("tocalc:"+c.codigo,"Calcular matas")}`}};
+const markPick=()=>{const m=val("cmarco");return m};
+P.p18=()=>{const m=val("cmarco");return {t:"Calcular matas",nav:2,back:0,h:`${topBanner()}${fld("clot","Ciclo",{opts:[["","Sin ciclo (solo por hectárea)"],...myCycles().filter(c=>c.estado==="ACTIVO").map(c=>[c.id,farm(c.f).nombre+" · "+(c.nombre||"Ciclo")+" ("+fmt(c.efect,4)+" ha)"])]})}${fld("ccu","Cultivo",{opts:cultOpts()})}<label>Marco de siembra</label>${seg("cmarco",[["cuadrado","Cuadrado"],["rectangular","Rectangular"],["tresbolillo","Tresbolillo"]])}${err1("cmarco")}${m?fld("cda",m==="rectangular"?"Distancia entre surcos (m)":"Distancia entre matas (m)",{im:"decimal"}):""}${m==="rectangular"?fld("cdb","Distancia entre matas (m)",{im:"decimal"}):""}${btn("calc","Calcular")}`}};
+P.p19=()=>{const r=S.ctx.res;const warn=r.warn?`<div class="banner warn" role="alert">${esc(r.warn)}${codeTag("V-34")}<br>${esc(r.effect)}</div>`:"";
+ return {t:"Resultado",nav:2,h:`<div class="card hl"><h3>${esc(r.titulo)}</h3>${kv("Matas por hectárea",fmt(r.ha,2))}${r.ef!=null?kv("Área efectiva",fmt(r.ef,4)+" ha")+kv("Matas en el ciclo",fmt(r.lote)):""}</div>${warn}${btn("usecy","Usar en un ciclo")}${btn("go:p18","Calcular otra vez","sec")}`}};
+const moves=cid=>[...DB.exp.filter(x=>x.c===cid).map(x=>({k:"exp",r:x,t:x.obs||x.cat,s:"Gasto · "+x.cat,v:-x.valor})),...DB.jor.filter(x=>x.c===cid).map(x=>({k:"jor",r:x,t:`Jornales (${fmt(x.n,1).replace(",0","")} × ${money(x.valor)})`,s:"Mano de obra",v:-x.n*x.valor})),...DB.inc.filter(x=>x.c===cid).map(x=>({k:"inc",r:x,t:"Venta de "+cult(x.cult||cyc(cid).cs[0].cult).nombre.toLowerCase(),s:`${fmt(x.q,1).replace(",0","")} × ${money(x.precio)}`,v:x.q*x.precio}))].sort((a,b)=>b.r.fecha-a.r.fecha);
+P.p20=()=>{const cs=myCycles();if(!cs.length)return{t:"Finanzas",nav:3,back:0,h:`<div class="banner">Cree un ciclo para registrar gastos e ingresos.</div>${btn("go:p14","Nuevo ciclo")}`};
+ if(!S.sel.cycle||!cs.some(c=>c.id===S.sel.cycle))S.sel.cycle=cs[0].id;const c=cyc(S.sel.cycle),m=fin(c.id);
+ return {t:"Finanzas",nav:3,back:0,h:`${topBanner()}${fld("selCycle","Ciclo",{opts:cs.map(x=>[x.id,cyLabel(x)]),value:S.sel.cycle,rerender:1})}${c.estado==="CERRADO"?`<div class="banner">Ciclo cerrado: no admite nuevos registros.</div>`:""}<div class="card hl"><h3>${esc(cname(c))}</h3>${kv("Gastos",money(m.g))}${kv("Ingresos",money(m.i))}${kv("Utilidad",money(m.u))}${kv("Rentabilidad",fmt(m.r,1)+" %")}</div>${moves(c.id).map(x=>`<div class="row"><button class="tap" data-act="edit:${x.k}:${x.r.id}"><span class="grow"><b>${esc(x.t)}</b><span class="muted" style="display:block">${esc(x.s)} · ${dstr(x.r.fecha)}</span></span><b>${x.v<0?"− ":""}${money(Math.abs(x.v))}</b></button>${x.r.sync==="PENDIENTE"?'<span class="badge off">pend.</span>':""}</div>`).join("")}<div style="height:14px"></div>${btn("go:p21","Registrar gasto")}${btn("go:p22","Registrar jornales","sec")}${btn("go:p23","Registrar ingreso","sec")}`}};
+const cyHead=()=>{const c=cyc(S.sel.cycle);return c?`<div class="banner">${esc(cyLabel(c))}</div>`:""};
+P.p21=()=>({t:"Registrar gasto",h:`${topBanner()}${cyHead()}${fld("gfecha","Fecha (día/mes/año)",{im:"numeric"})}${fld("gcat","Categoría",{opts:[["","Elija una categoría"],...CATS.map(c=>[c,c[0].toUpperCase()+c.slice(1)])]})}${fld("gval","Valor ($)",{im:"numeric",hint:"De $1 a $50.000.000, solo números."})}${fld("gobs","Observaciones (opcional)",{hint:"Máximo 150 caracteres."})}${btn("savegas","Guardar gasto")}`});
+P.p22=()=>({t:"Registrar jornales",h:`${topBanner()}${cyHead()}${fld("jfecha","Fecha (día/mes/año)",{im:"numeric"})}${fld("jn","Número de jornales",{im:"decimal",hint:"De 0,5 a 999, de medio en medio."})}${fld("jv","Valor del jornal ($)",{im:"numeric"})}<div class="card hl" id="prevj"></div>${btn("savejor","Guardar jornales")}`});
+P.p23=()=>{const c=cyc(S.sel.cycle);const sc=c?(val("icult")||c.cs[0].cult):null;const u=c?cult(sc).unidad_comercial:"unidad";return {t:"Registrar ingreso",h:`${topBanner()}${cyHead()}${fld("ifecha","Fecha (día/mes/año)",{im:"numeric"})}${c&&c.cs.length>1?fld("icult","Cultivo vendido",{opts:c.cs.map(x=>[x.cult,cult(x.cult).nombre]),value:sc,rerender:1}):""}<div class="card"><h3>Unidad comercial</h3>${esc(u)}</div>${fld("iq","Cantidad",{im:"decimal",hint:"De 0,1 a 10.000."})}${fld("ip","Precio por unidad ($)",{im:"numeric"})}<div class="card hl" id="previ"></div>${btn("saveinc","Guardar ingreso")}`}};
+P.p24=()=>{const {k,id}=S.ctx.rec;const r=(k==="exp"?DB.exp:k==="jor"?DB.jor:DB.inc).find(x=>x.id===id);if(!r)return P.p20();
+ const f=k==="exp"?`${fld("gfecha","Fecha (día/mes/año)",{im:"numeric"})}${fld("gcat","Categoría",{opts:CATS.map(c=>[c,c[0].toUpperCase()+c.slice(1)])})}${fld("gval","Valor ($)",{im:"numeric"})}${fld("gobs","Observaciones (opcional)")}`:k==="jor"?`${fld("jfecha","Fecha (día/mes/año)",{im:"numeric"})}${fld("jn","Número de jornales",{im:"decimal"})}${fld("jv","Valor del jornal ($)",{im:"numeric"})}`:`${fld("ifecha","Fecha (día/mes/año)",{im:"numeric"})}${fld("iq","Cantidad",{im:"decimal"})}${fld("ip","Precio por unidad ($)",{im:"numeric"})}`;
+ return {t:"Editar registro",h:`${topBanner()}${cyHead()}${f}${btn("saveedit","Guardar cambios")}${btn("del","Eliminar registro","danger")}`}};
+P.p25=()=>({t:"Sincronizar",back:0,nav:0,h:`${topBanner()}${S.online?banner("ok","Con conexión: los registros se envían solos al abrir la app o al detectar internet."):banner("warn",E("V-44").m,"V-44")}<div class="card"><h3>Estado de sincronización</h3>${kv("Pendientes por enviar",pendCount()+(pendCount()===1?" registro":" registros"))}${kv("Rechazados por el servidor","0")}${kv("Última sincronización",DB.lastSync)}</div>${btn("syncnow","Sincronizar ahora","",S.online?"":"disabled")}`});
+P.p26=()=>({t:"Cuenta",back:0,nav:0,h:`<div class="card"><b>${esc(S.user.nombre)}</b><div class="muted">${esc(S.user.correo)} · ${esc(S.user.ubic)}</div></div>${S.ctx.out?banner("warn",pendCount()===1?"Tiene 1 registro sin enviar. Se conservará en este dispositivo. ¿Cerrar sesión?":E("V-20").m.replace("N",pendCount()),"V-20")+btn("outyes","Cerrar sesión")+btn("back","Cancelar","sec"):btn("outask","Cerrar sesión","danger")}<button class="linkbtn" data-act="go:p27">Política de datos y ayuda</button>`});
+P.p27=()=>({t:"Política de datos",h:`<div class="legal"><b>Responsables.</b> Mikael Steven Ramos Musse y Kevin Zambrano, estudiantes de Ingeniería de Sistemas de Unicomfacauca.
+
+<b>Datos que se recolectan.</b> Nombre, correo, ubicación, clave (solo como hash con sal) y los datos que usted registra: fincas, ciclos con sus cultivos, gastos, jornales e ingresos.
+
+<b>Para qué se usan.</b> Crear y proteger su cuenta, enviar el código de verificación, calcular matas por hectárea y utilidad, y sincronizar sus datos. No se usan para publicidad ni se comparten con terceros.
+
+<b>Sus derechos.</b> Conocer, actualizar y rectificar sus datos, pedir prueba de la autorización, presentar quejas ante la Superintendencia de Industria y Comercio, revocar la autorización y pedir la eliminación de sus datos.
+
+<b>Cómo ejercerlos.</b> Escribiendo al correo mikaelramos@unicomfacauca.edu.co. Las consultas se responden en máximo 10 días hábiles y los reclamos en máximo 15 días hábiles.
+
+<b>Conservación.</b> Mientras la cuenta esté activa. Una cuenta que no se activa en 24 horas se elimina sola.</div>`});
+
+/* ---------- navegación ---------- */
+const AUTH=new Set(["p09","p10","p11","p12","p13","p14","p28","p15","p18","p19","p20","p21","p22","p23","p24","p25","p26"]);
+const today=()=>dstr(now());
+const DEF={p14:()=>({cfecha:today()}),p15:()=>({cierre:today()}),p21:()=>({gfecha:today()}),p22:()=>({jfecha:today()}),p23:()=>({ifecha:today()}),p13:()=>({unit:"m2"})};
+function enter(s,pre){S.f=Object.assign({},(DEF[s]||(()=>({})))(),pre||{});S.e={};S.banner=null}
+function go(s,pre,replace){if(AUTH.has(s)&&!S.user){s="p07"}if(!replace)S.stack.push(S.screen);S.screen=s;enter(s,pre);render()}
+function root(s){S.stack=[];S.screen=s;enter(s);render()}
+function back(){S.screen=S.stack.pop()||(S.user?"p10":"p01");S.e={};S.banner=null;render()}
+function loginOK(u){S.user=u;S.sel={farm:null,cycle:null};S.stack=[];S.f={};S.e={};S.banner=null;S.screen=myFarms().length?"p10":"p09";trySync()}
+function run(el,fn){if(S.busy)return;S.busy=true;if(el){el.disabled=true;el.textContent="Procesando…"}setTimeout(()=>{S.busy=false;S.e={};S.banner=null;try{fn()}catch(x){console.error(x);S.banner={k:"bad",m:"Ocurrió un error inesperado. Intente de nuevo."}}render()},300)}
+const fail=(id,c,x)=>{S.e[id]=E(c,x)};
+const okB=m=>{S.banner={k:"ok",m}};
+const badB=(c,x)=>{S.banner={k:"bad",m:E(c,x).m,c}};
+/* ---------- acciones ---------- */
+const A={};const dn=x=>String(x).replace(".",",");
+A.back=()=>back();
+A.go=(s)=>go(s);
+A.goroot=(s)=>root(s);
+A.tab=(s)=>root(s==="p10"&&!myFarms().length?"p09":s);
+A.seg=(el)=>{S.f[el.dataset.id]=el.dataset.v;render()};
+A.reg=(el)=>run(el,()=>{const nombre=val("nombre").trim(),ubic=val("ubic").trim(),mail=val("correo").trim(),m2=val("correo2").trim(),clave=val("clave");let e;
+ if(e=vNombre(nombre))S.e.nombre=e;if(e=vUbic(ubic))S.e.ubic=e;if(e=vMail(mail))S.e.correo=e;if(!m2||m2.toLowerCase()!==mail.toLowerCase())S.e.correo2=E("V-04");if(e=vClave(clave,mail,nombre))S.e.clave=e;if(!S.f.auth)S.e.auth=E("V-08");
+ if(!Object.keys(S.e).length){const ex=DB.users.find(u=>u.correo===mail.toLowerCase());if(ex)S.e.correo=ex.estado==="ACTIVA"?E("V-05"):E("V-06")}
+ if(Object.keys(S.e).length)return;
+ const u={id:uid(),nombre,ubic,correo:mail.toLowerCase(),clave,estado:"PENDIENTE",rol:"AGRICULTOR",creado:now(),otp:{reenvios:0,fallos:0}};DB.users.push(u);sendMail(u);S.ctx.email=u.correo;S.f={};S.screen="p04";okB("Cuenta creada. Le enviamos el código a su correo.")});
+const accOf=()=>DB.users.find(x=>x.correo===S.ctx.email&&x.estado==="PENDIENTE"&&x.otp);
+const gone=()=>{S.screen="p02";S.stack=[];S.f={};badB("V-15")};
+A.otpv=(el)=>run(el,()=>{const u=accOf();if(!u)return gone();const c=val("otp").trim();
+ if(!/^\d{6}$/.test(c))return fail("otp","V-09");if(u.otp.bloqueado)return fail("otp","V-12");if(now()>u.otp.expira)return fail("otp","V-11");
+ if(c!==u.otp.code){u.otp.fallos++;if(u.otp.fallos>=5){u.otp.bloqueado=true;return fail("otp","V-12")}return fail("otp","V-10",{n:5-u.otp.fallos})}
+ u.estado="ACTIVA";u.otp=null;loginOK(u);okB("Cuenta activada. Bienvenido, "+u.nombre.split(" ")[0]+".")});
+A.otpr=(el)=>run(el,()=>{const u=accOf();if(!u)return gone();if(u.otp.reenvios>=3)return badB("V-14");const w=Math.ceil((u.otp.enviado+60e3-now())/1000);if(w>0)return badB("V-13",{n:w});u.otp.reenvios++;sendMail(u);S.f={};okB("Enviamos un código nuevo. El anterior ya no sirve.")});
+A.chm=(el)=>run(el,()=>{const u=accOf();if(!u)return gone();const m=val("nmail").trim(),m2=val("nmail2").trim();let e;
+ if(e=vMail(m))S.e.nmail=e;if(!m2||m2.toLowerCase()!==m.toLowerCase())S.e.nmail2=E("V-04");
+ if(!S.e.nmail){const ex=DB.users.find(x=>x!==u&&x.correo===m.toLowerCase());if(ex)S.e.nmail=ex.estado==="ACTIVA"?E("V-05"):E("V-06")}
+ if(Object.keys(S.e).length)return;if(u.otp.reenvios>=3)return badB("V-14");const w=Math.ceil((u.otp.enviado+60e3-now())/1000);if(w>0)return badB("V-13",{n:w});
+ u.correo=m.toLowerCase();u.otp.reenvios++;sendMail(u);S.ctx.email=u.correo;S.stack.pop();S.screen="p04";S.f={};okB("Cambiamos el correo y enviamos un código nuevo a "+u.correo+".")});
+A.login=(el)=>run(el,()=>{const m=val("lmail").trim().toLowerCase(),p=val("lpass");if(!m||!p)return badB("V-16");
+ const f=DB.fails[m]||(DB.fails[m]={n:0,hasta:0});if(f.hasta>now())return badB("V-18",{t:hhmm(f.hasta)});
+ const u=DB.users.find(x=>x.correo===m);if(!u||u.clave!==p){f.n++;if(f.n>=5){f.hasta=now()+15*60e3;return badB("V-18",{t:hhmm(f.hasta)})}return badB("V-17")}
+ f.n=0;if(u.estado==="PENDIENTE"){S.ctx.email=u.correo;S.screen="p04";S.f={};S.banner={k:"warn",m:E("V-19").m,c:"V-19"};return}if(u.rol==="ADMIN"){S.banner={k:"warn",m:"Esta cuenta es de administración y no tiene pantallas en la aplicación. Use los comandos de administración del servidor."};return}loginOK(u)});
+A.savefarm=(el)=>run(el,()=>{const fn=val("fnom").trim();if(vLugar(fn))S.e.fnom=E("V-22");if(Object.keys(S.e).length)return;
+ const f={id:uid(),u:S.user.id,nombre:fn,sync:"PENDIENTE"};DB.farms.push(f);trySync();S.stack.push("p12");S.screen="p14";enter("p14",{cfinca:f.id});okB("Finca guardada. Ahora cree su primer ciclo.")});
+const r4=x=>Math.round(x*1e4)/1e4;
+const toHa=()=>{const v=val("nosemb").trim()===""?0:parseDec(val("nosemb"));if(v===null)return null;const u=val("unit")||"m2";return u==="m2"?v/1e4:u==="plaza"?v*0.64:v};
+A.savearea=(el)=>run(el,()=>{const l=cyc(S.ctx.cy),ha=toHa();if(ha===null||ha>=l.bruta-1e-12)return fail("nosemb","V-26");l.nosemb=r4(ha);l.efect=r4(l.bruta-ha);touch(l);S.sel={farm:l.f,cycle:l.id};root("p10");okB("Área efectiva guardada: "+fmt(l.efect,4)+" ha.")});
+A.area=(id)=>{S.ctx.cy=id;go("p13")};
+A.newcy=(id)=>go("p14",{cfinca:id});
+A.addcult=(id)=>{S.ctx.cy=id;go("p28")};
+A.savecy=(el)=>run(el,()=>{const mc=val("marco");const ln=val("clnom").trim();if(!val("cfinca"))S.e.cfinca={c:"",m:"Elija una finca."};if(ln&&vLugar(ln))S.e.clnom=E("V-22");const pa=parseDec(val("carea")),pp=parseDec(val("cpend"));if(pa===null||pa<0.0001||pa>10000)S.e.carea=E("V-24");if(pp===null||pp>100)S.e.cpend=E("V-25");
+ const vg=val("cvig").trim();let vig=null;if(vg){vig=parseInt0(vg);if(vig===null||vig<1||vig>50)S.e.cvig=E("V-49")}
+ if(!val("ccult"))S.e.ccult=E("V-27");const d=parseDate(val("cfecha"));if(!d)S.e.cfecha=E("V-28");else{const t=hoyD(),lim=new Date(t.getFullYear()+1,t.getMonth(),t.getDate());if(d<new Date(2020,0,1)||d>lim)S.e.cfecha=E("V-48")}
+ let a=null,b=null;if(mc){a=parseDec(val("ca"));if(a===null||a<0.01||a>10)S.e.ca=E("V-33");if(mc==="rectangular"){b=parseDec(val("cb"));if(b===null||b<0.01||b>10)S.e.cb=E("V-33")}}
+ if(Object.keys(S.e).length)return;const c={id:uid(),f:val("cfinca"),nombre:ln,bruta:pa,pend:pp,nosemb:0,efect:pa,vig,fecha:d.getTime(),estado:"ACTIVO",cierre:null,cs:[{id:uid(),cult:val("ccult"),marco:mc||null,a,b}],sync:"PENDIENTE"};DB.cycles.push(c);trySync();S.ctx.cy=c.id;S.stack=["p11"];S.screen="p13";enter("p13");okB("Ciclo iniciado. Ahora defina el área real.")});
+A.savecult=(el)=>run(el,()=>{const c=cyc(S.ctx.cy);if(c.estado==="CERRADO")return badB("V-31");const am=val("amarco");if(!val("acult"))S.e.acult=E("V-27");else if(c.cs.some(x=>x.cult===val("acult")))S.e.acult=E("V-50");
+ let a=null,b=null;if(am){a=parseDec(val("aa"));if(a===null||a<0.01||a>10)S.e.aa=E("V-33");if(am==="rectangular"){b=parseDec(val("ab"));if(b===null||b<0.01||b>10)S.e.ab=E("V-33")}}
+ if(Object.keys(S.e).length)return;c.cs.push({id:uid(),cult:val("acult"),marco:am||null,a,b});touch(c);root("p11");okB("Cultivo agregado al ciclo.")});
+A.close=(id)=>{S.ctx={cy:id};go("p15")};
+A.fin=(id)=>{S.sel.cycle=id;root("p20")};
+const doClose=(d)=>{const c=cyc(S.ctx.cy);c.estado="CERRADO";c.cierre=d.getTime();touch(c);S.ctx.done=true;S.ctx.ask=false};
+A.closego=(el)=>run(el,()=>{const c=cyc(S.ctx.cy),d=parseDate(val("cierre"));if(!d)return fail("cierre","V-28");if(d.getTime()<new Date(new Date(c.fecha).toDateString()).getTime())return fail("cierre","V-29");if(d.getTime()>hoyD().getTime())return fail("cierre","V-29");if(fin(c.id).i===0){S.ctx.ask=true;return}doClose(d)});
+A.closeyes=(el)=>run(el,()=>{const c=cyc(S.ctx.cy),d=parseDate(val("cierre"));if(!d)return fail("cierre","V-28");if(d.getTime()<new Date(new Date(c.fecha).toDateString()).getTime()||d.getTime()>hoyD().getTime())return fail("cierre","V-29");doClose(d)});
+A.cult=(c)=>{S.ctx.cult=c;go("p17")};
+A.tocalc=(c)=>{go("p18",{ccu:c})};
+A.calc=(el)=>run(el,()=>{const m=val("cmarco");if(!m)S.e.cmarco=E("V-32");const da=parseDec(val("cda")),db=parseDec(val("cdb"));if(m){if(da===null||da<0.01||da>10)S.e.cda=E("V-33");if(m==="rectangular"&&(db===null||db<0.01||db>10))S.e.cdb=E("V-33")}
+ if(Object.keys(S.e).length)return;const ha=nHa(m,da,db),l=val("clot")?cyc(val("clot")):null,c=val("ccu")?cult(val("ccu")):null;
+ const res={ha,ef:l?l.efect:null,lote:l?rhu(ha*l.efect):null,titulo:`${c?c.nombre:"Cultivo sin elegir"} · ${m} ${dn(da)}${m==="rectangular"?" × "+dn(db)+" m":" m"}`,input:{clote:val("clot"),ccult:val("ccu"),marco:m,ca:val("cda"),cb:val("cdb")}};
+ if(c){const ds=m==="rectangular"?[da,db]:[da];const lo=ds.some(d=>d<c.distancia_min_m),hi=ds.some(d=>d>c.distancia_max_m);if(lo||hi){res.warn=E("V-34",{r:`(${fmt(c.distancia_min_m,1)}–${fmt(c.distancia_max_m,1)} m)`}).m;res.effect=lo?c.advertencia_menor:c.advertencia_mayor}}
+ S.ctx.res=res;S.stack.push("p18");S.screen="p19";S.e={}});
+A.usecy=()=>go("p14",S.ctx.res.input?{cfinca:S.ctx.res.input.clote?cyc(S.ctx.res.input.clote).f:"",ccult:S.ctx.res.input.ccult,marco:S.ctx.res.input.marco,ca:S.ctx.res.input.ca,cb:S.ctx.res.input.cb}:{});
+const openCy=()=>{const c=cyc(S.sel.cycle);if(!c){S.banner={k:"bad",m:"Primero cree un ciclo."};return null}if(c.estado==="CERRADO"){badB("V-31");return null}return c};
+const vDate=(id)=>{const d=parseDate(val(id));if(!d){S.e[id]=E("V-28");return d}const cy=cyc(S.sel.cycle);if(d.getTime()>hoyD().getTime()||(cy&&d.getTime()<new Date(new Date(cy.fecha).toDateString()).getTime()))S.e[id]=E("V-47");return d};
+const vMoney=(id,lo,cOut,cFmt)=>{const v=parseInt0(val(id));if(v===null){S.e[id]=E(cFmt);return null}if(v<lo||v>50000000){S.e[id]=E(cOut);return null}return v};
+const gasChecks=()=>{const d=vDate("gfecha");if(!val("gcat"))S.e.gcat=E("V-37");const v=vMoney("gval",1,"V-35","V-36");const o=vObs(val("gobs"));if(o)S.e.gobs=o;return {d,v}};
+const jorChecks=()=>{const d=vDate("jfecha");const n=parseDec(val("jn"));if(n===null||n<0.5||n>999||Math.abs(n*2-Math.round(n*2))>1e-9)S.e.jn=E("V-39");const v=vMoney("jv",1,"V-40","V-40");return{d,n,v}};
+const incChecks=()=>{const d=vDate("ifecha");const q=parseDec(val("iq"));if(q===null||q<0.1||q>10000)S.e.iq=E("V-41");const p=vMoney("ip",1,"V-42","V-42");return{d,q,p}};
+const done=(m)=>{S.stack=S.stack.filter(x=>x!=="p21"&&x!=="p22"&&x!=="p23"&&x!=="p24");S.screen="p20";S.f={};if(m)okB(m)};
+A.savegas=(el)=>run(el,()=>{const c=openCy();if(!c)return;const {d,v}=gasChecks();if(Object.keys(S.e).length)return;const r={id:uid(),c:c.id,fecha:d.getTime(),cat:val("gcat"),valor:v,obs:val("gobs").trim(),sync:"PENDIENTE"};DB.exp.push(r);trySync();done("Gasto guardado. La utilidad se actualizó.")});
+A.savejor=(el)=>run(el,()=>{const c=openCy();if(!c)return;const {d,n,v}=jorChecks();if(Object.keys(S.e).length)return;DB.jor.push({id:uid(),c:c.id,fecha:d.getTime(),n,valor:v,sync:"PENDIENTE"});trySync();done("Jornales guardados. Costo: "+money(n*v)+".")});
+A.saveinc=(el)=>run(el,()=>{const c=openCy();if(!c)return;const {d,q,p}=incChecks();if(Object.keys(S.e).length)return;DB.inc.push({id:uid(),c:c.id,cult:val("icult")||c.cs[0].cult,fecha:d.getTime(),q,precio:p,sync:"PENDIENTE"});trySync();done("Ingreso guardado. La utilidad se actualizó.")});
+A.edit=(k,id)=>{const r=(k==="exp"?DB.exp:k==="jor"?DB.jor:DB.inc).find(x=>x.id===id);S.ctx.rec={k,id};const pre=k==="exp"?{gfecha:dstr(r.fecha),gcat:r.cat,gval:String(r.valor),gobs:r.obs||""}:k==="jor"?{jfecha:dstr(r.fecha),jn:String(r.n).replace(".",","),jv:String(r.valor)}:{ifecha:dstr(r.fecha),iq:String(r.q).replace(".",","),ip:String(r.precio)};go("p24",pre)};
+A.saveedit=(el)=>run(el,()=>{const {k,id}=S.ctx.rec;const c=openCy();if(!c)return;const arr=k==="exp"?DB.exp:k==="jor"?DB.jor:DB.inc,r=arr.find(x=>x.id===id);
+ if(k==="exp"){const {d,v}=gasChecks();if(Object.keys(S.e).length)return;Object.assign(r,{fecha:d.getTime(),cat:val("gcat"),valor:v,obs:val("gobs").trim()})}
+ else if(k==="jor"){const {d,n,v}=jorChecks();if(Object.keys(S.e).length)return;Object.assign(r,{fecha:d.getTime(),n,valor:v})}
+ else{const {d,q,p}=incChecks();if(Object.keys(S.e).length)return;Object.assign(r,{fecha:d.getTime(),q,precio:p})}
+ touch(r);done("Cambios guardados. Los saldos se recalcularon.")});
+A.del=(el)=>run(el,()=>{const {k,id}=S.ctx.rec;const c=openCy();if(!c)return;const arr=k==="exp"?DB.exp:k==="jor"?DB.jor:DB.inc;const i=arr.findIndex(x=>x.id===id);const r=arr.splice(i,1)[0];trySync();S.toast={m:"Registro eliminado. La utilidad se recalculó.",until:now()+10000,realUntil:Date.now()+10000,undo:{arr,r}};done("")});
+A.undo=()=>{const t=S.toast;if(!t)return;if(now()>t.until||Date.now()>t.realUntil){t.m=E("V-43").m+" ("+"V-43"+")";t.dead=true;render();return}t.undo.arr.push(t.undo.r);touch(t.undo.r);S.toast=null;render()};
+A.syncnow=(el)=>run(el,()=>{if(!S.online)return;if(DB.expireSession){DB.expireSession=false;S.user=null;S.stack=[];S.screen="p07";S.banner={k:"warn",m:E("V-46").m,c:"V-46"};return}if(DB.nextFail){DB.nextFail=false;S.banner={k:"warn",m:E("V-45").m,c:"V-45"};return}
+ [...DB.farms,...DB.cycles,...DB.exp,...DB.jor,...DB.inc].forEach(x=>{if(x.sync==="PENDIENTE")x.sync="OK"});DB.lastSync="hoy "+hhmm(now());okB("Datos sincronizados.")});
+A.outask=()=>{if(!pendCount()){S.user=null;root("p01");return}S.ctx.out=true;render()};
+A.outyes=()=>{S.user=null;S.ctx={};root("p01")};
+/* ---------- render ---------- */
+const liveText=()=>{
+ if(S.screen==="p13"){const l=cyc(S.ctx.cy),ha=toHa(),el=$("#prev13");if(!el)return;el.innerHTML=ha===null?"<h3>Convertido</h3>Escriba solo números.":`<h3>Resultado</h3>${kv("Convertido a hectáreas",fmt(ha,4)+" ha")}${kv("Área efectiva",ha<l.bruta?fmt(r4(l.bruta-ha),4)+" ha":"—")}`}
+ if(S.screen==="p22"){const n=parseDec(val("jn")),v=parseInt0(val("jv")),el=$("#prevj");if(el)el.innerHTML=`<h3>Cálculo automático</h3>${kv("Costo total",n!==null&&v!==null?money(n*v):"—")}`}
+ if(S.screen==="p23"){const q=parseDec(val("iq")),p=parseInt0(val("ip")),el=$("#previ");if(el)el.innerHTML=`<h3>Total del ingreso</h3>${kv("Total",q!==null&&p!==null?money(q*p):"—")}`}};
+function render(){tick();let sc;try{sc=P[S.screen]()}catch(x){console.error(x);sc={t:"Sembrando Futuro",h:'<div class="banner bad">Ocurrió un error inesperado. Intente de nuevo.</div>'}}
+ const prev=document.querySelector(".content"),top=prev&&prev.dataset.s===S.screen?prev.scrollTop:0;
+ const showBack=sc.back!==0&&S.stack.length;const nav=sc.nav!==undefined&&S.user;
+ const pill=`<button class="pill" data-act="go:${S.user?"p25":"p01"}" ${S.user?"":"tabindex=-1"} aria-label="Estado de conexión">${S.online?"● En línea":"○ Sin conexión"}${pendCount()?" · "+pendCount():""}</button>`;
+ const acct=S.user&&nav?`<button class="pill" data-act="go:p26">Cuenta</button>`:"";
+ const t=S.toast;const toast=t?`<div class="toast" id="toast" role="status"><span id="toastm">${esc(t.m)}</span>${t.dead?"":`<button data-act="undo">Deshacer</button>`}</div>`:"";
+ $("#screen").innerHTML=`<header class="appbar">${showBack?`<button class="back" data-act="back" aria-label="Volver">‹</button>`:""}<h1>${esc(sc.t)}</h1>${acct}${pill}</header><div class="content" data-s="${S.screen}" id="content">${sc.h}</div>${nav?`<nav class="nav" aria-label="Principal">${NAVS.map((n,i)=>`<button data-act="tab:${n[0]}" ${i===sc.nav?'aria-current="page"':""}>${n[1]}</button>`).join("")}</nav>`:""}${toast}`;
+ $("#content").scrollTop=top;liveText();panel()}
+
+/* ---------- panel de prueba ---------- */
+const NAMES={p01:"P-01 Bienvenida",p02:"P-02 Registro",p04:"P-04 Verificar código",p06:"P-06 Cambiar correo",p07:"P-07 Ingreso",p09:"P-09 Panel vacío",p10:"P-10 Panel activo",p11:"P-11 Mis fincas",p12:"P-12 Nueva finca",p13:"P-13 Área real",p14:"P-14 Nuevo ciclo",p15:"P-15 Cerrar ciclo",p16:"P-16 Catálogo",p17:"P-17 Ficha",p18:"P-18 Calculadora",p19:"P-19 Resultado",p20:"P-20 Finanzas",p21:"P-21 Gasto",p22:"P-22 Jornales",p23:"P-23 Ingreso",p24:"P-24 Editar o eliminar",p25:"P-25 Sincronización",p26:"P-26 Cerrar sesión",p27:"Política de datos",p28:"P-28 Agregar cultivo"};
+const GROUPS=[["Acceso",["p01","p02","p04","p06","p07","p27"]],["Panel",["p09","p10"]],["Fincas y ciclos",["p11","p12","p13","p14","p28","p15"]],["Catálogo y cálculo",["p16","p17","p18","p19"]],["Finanzas",["p20","p21","p22","p23","p24"]],["Conexión y cuenta",["p25","p26"]]];
+const RR={p02:["V-01","V-02","V-03","V-04","V-05","V-06","V-07","V-08"],p04:["V-09","V-10","V-11","V-12","V-13","V-14","V-15"],p06:["V-03","V-04","V-05","V-06","V-13","V-14"],p07:["V-16","V-17","V-18","V-19"],p12:["V-22"],p13:["V-26"],p14:["V-22","V-24","V-25","V-27","V-28","V-48","V-49","V-33"],p28:["V-27","V-33","V-50","V-31"],p15:["V-28","V-29","V-30"],p18:["V-32","V-33","V-34"],p19:["V-34"],p21:["V-31","V-28","V-47","V-35","V-36","V-37","V-38"],p22:["V-31","V-28","V-47","V-39","V-40"],p23:["V-31","V-28","V-47","V-41","V-42"],p24:["V-43","V-31","V-28","V-47"],p25:["V-44","V-45","V-46"],p26:["V-20"],p20:["V-31"],p10:["V-44"]};
+const RFS={p01:"RF-02, RF-03",p02:"RF-02",p04:"RF-02",p06:"RF-02",p07:"RF-03",p09:"RF-07",p10:"RF-07, RF-28, RF-35",p11:"RF-12",p12:"RF-12",p13:"RF-13",p14:"RF-14",p28:"RF-14",p15:"RF-15",p16:"RF-17, RF-37",p17:"RF-17",p18:"RF-18",p19:"RF-18",p20:"RF-23, RF-24, RF-25, RF-27, RF-28",p21:"RF-23",p22:"RF-24",p23:"RF-25",p24:"RF-27",p25:"RF-35, RF-36",p26:"RF-04",p27:"RF-02"};
+let lastPanel="";
+function panel(){
+ const mails=DB.mails.slice(0,6).map(m=>`<div class="mail">Para <b>${esc(m.a)}</b> · ${hhmm(m.t)}<br>Asunto: Su código de Sembrando Futuro<br>Su código de verificación es <b>${m.code}</b>. Vale 15 minutos.</div>`).join("")||'<p class="muted">Aún no se ha enviado ningún correo.</p>';
+ const ids=RR[S.screen]||[];
+ const rules=ids.length?`<div class="tablewrap"><table class="rules"><tr><th>Regla</th><th>Campo</th><th>Escriba (válido)</th><th>Escriba (inválido)</th></tr>${ids.map(i=>{const v=VROW[i];return `<tr><td><code>${i}</code></td><td>${esc(v[3])}</td><td>${esc(v[5]||"–")}</td><td>${esc(v[6]||"–")}</td></tr>`}).join("")}</table></div>`:'<p class="muted">Esta pantalla no tiene reglas de entrada. Muestra datos calculados.</p>';
+ const T=new Date(now());
+ const html=`<section><h3>Prueba de la pantalla actual</h3><p><b>${esc(NAMES[S.screen]||S.screen)}</b> · requisito ${RFS[S.screen]||"—"}</p>${rules}</section>
+<section><h3>Conexión (RF-35, RF-36)</h3><div class="btns"><button data-p="on" class="${S.online?"on":""}">En línea</button><button data-p="off" class="${S.online?"":"on"}">Sin conexión</button></div><p class="muted" style="margin-top:8px">Sin conexión, los registros quedan pendientes y se envían solos al volver.</p><div class="btns"><button data-p="failnext" class="${DB.nextFail?"on":""}">Simular falla del servidor</button><button data-p="expire" class="${DB.expireSession?"on":""}">Simular sesión vencida</button></div></section>
+<section><h3>Reloj simulado</h3><p>Hora de la app: <b>${pad(T.getHours())}:${pad(T.getMinutes())}:${pad(T.getSeconds())}</b> ${skew?`(+${Math.round(skew/1000)} s)`:""}</p><div class="btns"><button data-p="t:10000">+10 s</button><button data-p="t:60000">+60 s</button><button data-p="t:900000">+15 min</button><button data-p="t:86400000">+24 h</button><button data-p="t:0">Volver a la hora real</button></div><p class="muted" style="margin-top:8px">Sirve para probar el reenvío (60 s), el código vencido (15 min), el bloqueo de ingreso (15 min), el deshacer (10 s) y el borrado de cuentas pendientes (24 h).</p></section>
+<section><h3>Correo simulado</h3>${mails}</section>
+<section><h3>Ir a una pantalla</h3>${GROUPS.map(g=>`<p style="margin:0 0 4px"><b>${g[0]}</b></p><div class="btns" style="margin-bottom:10px">${g[1].map(i=>`<button data-p="j:${i}" class="${S.screen===i?"on":""}">${NAMES[i]}</button>`).join("")}</div>`).join("")}<p class="muted">P-03, P-05 y P-08 son los estados con errores de P-02, P-04 y P-07: escriba datos inválidos y presione el botón. Al saltar a una pantalla interna se entra como María Pérez.</p></section>
+<section><h3>Opciones</h3><div class="btns"><button data-p="codes" class="${S.codes?"on":""}">Mostrar códigos de regla (V-xx)</button><button data-p="reset">Restablecer datos de prueba</button></div></section>`;
+ const sig=html;if(sig!==lastPanel){lastPanel=sig;$("#panel").innerHTML=html}
+}
+function jump(s){
+ if(AUTH.has(s)&&!S.user){const u=DB.users.find(x=>x.id==="U-01");loginOK(u)}
+ const pre={};
+ if(s==="p04"||s==="p06"){if(!S.ctx.email||!accOf())S.ctx.email="pedro.gomez@correo.com"}
+ if(s==="p13")S.ctx.cy=S.ctx.cy||"C-01";
+ if(s==="p28")S.ctx.cy="C-01";
+ if(s==="p15"){S.ctx={...S.ctx,cy:S.sel.cycle&&cyc(S.sel.cycle).estado==="ACTIVO"?S.sel.cycle:"C-01",done:false,ask:false}}
+ if(s==="p17")S.ctx.cult=S.ctx.cult||"CAFE";
+ if(s==="p19"){const c=cult("CAFE");S.ctx.res={ha:nHa("cuadrado",2.5),ef:0.9,lote:rhu(nHa("cuadrado",2.5)*0.9),titulo:"Café · cuadrado 2,5 m",warn:E("V-34",{r:"(1,0–2,0 m)"}).m,effect:c.advertencia_mayor,input:{clote:"C-01",ccult:"CAFE",marco:"cuadrado",ca:"2,5",cb:""}}}
+ if(s==="p24"){const r=DB.exp[0]||DB.jor[0]||DB.inc[0];const k=DB.exp[0]?"exp":DB.jor[0]?"jor":"inc";if(!r)return;S.sel.cycle=r.c;A.edit(k,r.id);return}
+ if(s==="p20"&&!S.sel.cycle)S.sel.cycle="C-01";
+ if(["p21","p22","p23"].includes(s)&&!S.sel.cycle)S.sel.cycle="C-01";
+ S.stack=[];S.screen=s;enter(s,pre);render()}
+const SUB=new Set(["reg","otpv","otpr","chm","login","savefarm","savecult","savearea","savecy","closego","closeyes","calc","savegas","savejor","saveinc","saveedit","del","syncnow"]);
+document.addEventListener("click",ev=>{
+ const p=ev.target.closest("[data-p]");
+ if(p){const k=p.dataset.p;if(k==="on"||k==="off"){S.online=k==="on";if(S.online)trySync();render()}
+  else if(k==="failnext"){DB.nextFail=!DB.nextFail;render()}else if(k==="expire"){DB.expireSession=!DB.expireSession;render()}
+  else if(k.startsWith("t:")){const v=+k.slice(2);skew=v===0?0:skew+v;render()}
+  else if(k.startsWith("j:"))jump(k.slice(2));else if(k==="codes"){S.codes=!S.codes;render()}
+  else if(k==="reset"){skew=0;seed();render()}return}
+ const a=ev.target.closest("[data-act]");if(!a)return;ev.preventDefault();
+ if(a.disabled&&!a.dataset.wait)return;
+ const [name,...args]=a.dataset.act.split(":");
+ if(name==="go"){if(args[0]==="p15")S.ctx={...S.ctx,cy:S.sel.cycle,done:false,ask:false};return go(args[0])}
+ if(A[name])A[name](SUB.has(name)||name==="seg"?a:args[0],args[1]);
+});
+const onIn=ev=>{const el=ev.target;if(!el.dataset||!el.dataset.f)return;S.f[el.dataset.f]=el.type==="checkbox"?el.checked:el.value;
+ if(el.dataset.f==="selFarm"){S.sel.farm=el.value;S.sel.cycle=null;return render()}
+ if(el.dataset.f==="selCycle"){S.sel.cycle=el.value;return render()}
+ if(el.hasAttribute("data-rr"))return render();liveText()};
+document.addEventListener("input",onIn);document.addEventListener("change",ev=>{if(ev.target.tagName==="SELECT"||ev.target.type==="checkbox")onIn(ev)});
+document.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target.tagName==="INPUT"&&ev.target.type!=="checkbox"){const b=document.querySelector(".content .btn:not(.sec):not(.danger):not([disabled])");if(b){ev.preventDefault();b.click()}}});
+setInterval(()=>{const u=S.screen==="p04"?accOf():null;if(u){const w=Math.max(0,Math.ceil((u.otp.enviado+60e3-now())/1000));const el=$("#wait");const left=3-u.otp.reenvios;if(el){const nt=`Reenvíos disponibles: ${left}.${w?` Puede pedir otro código en ${Math.floor(w/60)}:${pad(w%60)}.`:""}`;if(el.textContent!==nt)el.textContent=nt}}
+ const t=S.toast;if(t&&!t.dead&&(Date.now()>t.realUntil||now()>t.until)){t.m=E("V-43").m;t.dead=true;render()}else if(t&&t.dead&&Date.now()>t.realUntil+3500){S.toast=null;render()}},1000);
+seed();render();
+})();
+
+</script>
