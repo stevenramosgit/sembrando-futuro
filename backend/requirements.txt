@@ -1,0 +1,12 @@
+# Paquetes directos del servicio (documento 20).
+# Después de instalar con Python 3.14.7 y comprobar que las pruebas pasan, ejecute `pip freeze > requirements.txt`
+# para fijar las versiones exactas (nombre==versión) y suba el resultado al repositorio.
+fastapi>=0.116.1
+uvicorn[standard]>=0.30
+pydantic>=2.9
+sqlalchemy>=2.0.36
+pymysql>=1.1.1
+alembic>=1.14
+python-dotenv>=1.0
+argon2-cffi>=23.1
+httpx>=0.27            # envío de códigos por la API HTTPS de Brevo
