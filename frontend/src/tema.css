@@ -1,0 +1,179 @@
+/* Diseño de sitio web de Sembrando Futuro (se carga después de estilos.css y solo cambia la apariencia).
+   Sigue el estilo del sitio del proyecto: encabezado claro con el logo y el menú, portada con ejemplo,
+   panel tipo tablero y pie de página. Es adaptable:
+   - Teléfono: encabezado con el emblema y el título, y pestañas abajo (cómodas con el pulgar).
+   - Computador (960 px o más): menú arriba, contenido centrado de hasta 1.180 px y pie de página.
+   RNF-07: texto de contenido de 18 px, etiquetas secundarias de 16 px, controles de 48 px y contraste de 4,5:1. */
+
+:root { --ancho: 1180px; --radio: 14px; }
+
+/* ================================================================ común (teléfono y computador) */
+.appbar { background: rgba(251, 250, 247, .94); backdrop-filter: saturate(180%) blur(12px); -webkit-backdrop-filter: saturate(180%) blur(12px); padding: 0; }
+.nav-fila { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 14px; min-height: 64px; }
+.appbar .marca { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; box-shadow: 0 0 0 1px var(--linea); }
+.nav-acciones { display: flex; align-items: center; gap: 8px; }
+.marca-pc, .nav-sup, .usuario-pc, .btn-nav, .titulo-pc { display: none; }
+.nav-marca { display: none; }
+
+.eyebrow { font-size: 18px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--tierra); margin: 0 0 6px; }
+.btn-fantasma { background: transparent; border: 1px solid transparent; color: var(--verde); }
+.btn-fantasma:hover, .btn-fantasma:focus-visible { background: var(--verde-suave); color: var(--verde-texto); }
+.enlace-sutil { background: none; border: 0; color: var(--verde); font: inherit; font-weight: 600; min-height: 48px; padding: 0 4px; cursor: pointer; }
+.badge.estado-activo { display: inline-flex; align-items: center; gap: 6px; }
+.badge.estado-activo::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--verde); }
+
+/* ---------- pie de página: en el teléfono solo en la portada */
+.pie { display: none; border-top: 1px solid var(--linea); background: var(--superficie); margin-top: 32px; padding: 32px 16px 40px; }
+.content[data-s="p01"] .pie { display: block; }
+.pie-rejilla { display: grid; gap: 24px; max-width: var(--ancho); margin: 0 auto; }
+.pie-logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; color: var(--tinta); font-size: 1.125rem; }
+.pie-logo img { border-radius: 50%; }
+.pie-marca p { margin: 8px 0 0; }
+.pie-col { display: flex; flex-direction: column; gap: 2px; }
+.pie-col h2 { font-size: 18px; text-transform: uppercase; letter-spacing: .06em; color: var(--tinta-2); margin: 0 0 6px; }
+.pie-col span, .pie-col button { color: var(--tinta-2); font-size: 18px; text-align: left; }
+.pie-col button { background: none; border: 0; padding: 0; min-height: 48px; cursor: pointer; font: inherit; }
+.pie-col button:hover { color: var(--verde); text-decoration: underline; }
+
+/* ---------- portada (P-01) */
+.heroe { display: grid; gap: 28px; padding: 4px 0 8px; }
+.logo-heroe { width: 160px; height: auto; display: block; margin: 0 0 12px; }
+.heroe-titulo { font-size: clamp(2.1rem, 7vw, 3.5rem); font-weight: 800; letter-spacing: -.03em; line-height: 1.05; margin: 0 0 14px; }
+.heroe-sub { font-size: 1.15rem; max-width: 34em; }
+.heroe-botones { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 10px; }
+.heroe-botones .btn { padding: 0 22px; }
+.heroe-nota { font-size: 18px; color: var(--tinta-3); margin: 0; }
+.ejemplo { background: var(--superficie); border: 1px solid var(--linea); border-radius: 18px; box-shadow: 0 18px 48px rgba(25, 28, 23, .10); padding: 20px; align-self: center; }
+.ejemplo-cab { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+.ejemplo-cab span { color: var(--tinta-2); font-size: 18px; }
+.ejemplo-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ejemplo-kpis div, .ejemplo-utilidad { background: var(--superficie-2); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; }
+.ejemplo-kpis span, .ejemplo-utilidad span { font-size: 18px; color: var(--tinta-2); }
+.ejemplo-kpis b { font-size: 1.25rem; }
+.ejemplo-utilidad { background: var(--verde-suave); margin-top: 10px; }
+.ejemplo-utilidad b { font-size: 1.9rem; color: var(--verde-texto); letter-spacing: -.02em; }
+.ejemplo-grafica { border-top: 1px solid var(--linea); margin-top: 14px; padding-top: 12px; }
+.ejemplo-leyenda { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; font-size: 18px; color: var(--tinta-2); }
+.ejemplo-leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 4px 0 8px; }
+.ejemplo-leyenda i.g, .ejemplo-barras .g { background: var(--gasto); }
+.ejemplo-leyenda i.i, .ejemplo-barras .i { background: var(--verde); }
+.ejemplo-barras { display: grid; grid-template-columns: repeat(5, 1fr); height: 110px; align-items: end; margin-top: 8px; }
+.ejemplo-barras div { display: grid; grid-template-columns: 12px 12px; gap: 3px; justify-content: center; align-items: end; height: 100%; position: relative; padding-bottom: 26px; }
+.ejemplo-barras span { display: block; border-radius: 3px 3px 0 0; min-height: 2px; }
+.ejemplo-barras em { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-style: normal; font-size: 18px; color: var(--tinta-2); }
+.seccion { border-top: 1px solid var(--linea); margin-top: 32px; padding-top: 32px; }
+.seccion > h2 { font-size: clamp(1.6rem, 4vw, 2.1rem); margin-bottom: 8px; }
+.funciones { display: grid; gap: 14px; margin-top: 20px; }
+.funcion { background: var(--superficie); border: 1px solid var(--linea); border-radius: var(--radio); padding: 18px; }
+.funcion h3 { margin: 12px 0 4px; }
+.funcion p { margin: 0; }
+.pasos { list-style: none; counter-reset: paso; display: grid; gap: 18px; padding: 0; margin: 20px 0 0; }
+.pasos li { counter-increment: paso; }
+.pasos li::before { content: counter(paso); display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--tinta); color: var(--fondo); font-weight: 700; margin-bottom: 10px; }
+.pasos h3 { margin: 0 0 4px; }
+.pasos p { margin: 0; }
+.cta { background: var(--verde); color: #fff; border-radius: 18px; padding: 26px 24px; margin-top: 36px; display: grid; gap: 18px; }
+.cta h2 { color: #fff; margin: 0 0 4px; font-size: 1.5rem; }
+.cta p { color: #F1F7EC; margin: 0; }
+.cta-botones { display: flex; flex-wrap: wrap; gap: 10px; }
+.cta .btn { background: #fff; color: var(--verde-texto); border: 1px solid #fff; padding: 0 22px; }
+.cta .btn-borde-claro { background: var(--verde); color: #fff; border-color: rgba(255, 255, 255, .7); }
+.content[data-s="p01"] .contenedor > .linkbtn { margin-top: 12px; }
+
+/* ---------- acceso (P-02, P-07): encabezado con el emblema */
+.acceso-cabeza { text-align: center; margin: 4px 0 18px; }
+.acceso-cabeza img { width: 88px; height: 88px; border-radius: 50%; box-shadow: var(--sombra); margin-bottom: 10px; }
+.acceso-cabeza h2 { margin-bottom: 4px; }
+.portada .emblema { width: 112px; height: 112px; border-radius: 50%; margin-bottom: 12px; box-shadow: var(--sombra); }
+
+/* ---------- panel tipo tablero (P-10) */
+.panel-cabeza { display: grid; gap: 12px; margin-bottom: 14px; }
+.panel-titulo { font-size: clamp(1.7rem, 5vw, 2.25rem); letter-spacing: -.02em; margin: 0 0 6px; }
+.panel-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin: 0; color: var(--tinta-2); }
+.panel-meta > span { display: inline-flex; align-items: center; gap: 6px; }
+.selectores .field { margin-bottom: 10px; }
+.accesos { display: grid; gap: 8px; margin: 6px 0 18px; }
+.accesos .btn { padding: 0 18px; }
+.seccion-titulo { font-size: 1.2rem; margin: 6px 0 10px; }
+.kpi small { font-size: 18px; color: var(--tinta-2); line-height: 1.35; margin-top: 4px; }
+.rejilla-2 { display: grid; gap: 0 18px; }
+.rejilla-2:empty { display: none; }
+.card h3 { display: flex; align-items: center; gap: 8px; }
+.card-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.card-cab h3 { margin: 0; }
+.barra-fila { grid-template-columns: 96px 1fr auto; }
+.barra-fila b { font-variant-numeric: tabular-nums; }
+.subtitulo { font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--tinta-2); margin: 16px 0 8px; }
+.reparto { display: grid; gap: 8px; margin-bottom: 8px; }
+.reparto-fila { display: grid; grid-template-columns: minmax(0, 1fr) 70px auto 52px; align-items: center; gap: 10px; }
+.reparto-fila .barra-pista { height: 10px; }
+.reparto-fila b { font-variant-numeric: tabular-nums; text-align: right; }
+.reparto-fila em { font-style: normal; color: var(--tinta-2); text-align: right; font-size: 18px; }
+.barra-tierra { background: var(--tierra); }
+.fila button.tap:disabled { cursor: default; }
+
+/* ================================================================ tableta: dos columnas donde cabe */
+@media (min-width: 640px) {
+  .funciones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pasos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .accesos { display: flex; flex-wrap: wrap; align-items: center; }
+  .accesos .btn-fantasma { margin-left: auto; }
+  .pie-rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ================================================================ computador */
+@media (min-width: 960px) {
+  body { background: var(--fondo); }
+  #screen { max-width: none; box-shadow: none; }
+  .tabs { display: none; }
+
+  /* Encabezado del sitio: logo, menú, conexión y cuenta */
+  .appbar { position: relative; z-index: 3; }
+  .nav-fila { max-width: var(--ancho); margin: 0 auto; padding: 8px 24px; gap: 20px; min-height: 68px; }
+  .appbar .marca, .appbar h1, .appbar .pill.cuenta { display: none; }
+  .marca-pc { display: inline-flex; align-items: center; gap: 10px; background: none; border: 0; padding: 0; font: inherit; font-weight: 700; font-size: 1.125rem; color: var(--tinta); min-height: 48px; cursor: pointer; white-space: nowrap; }
+  .marca-pc img { border-radius: 50%; box-shadow: 0 0 0 1px var(--linea); }
+  .nav-sup { display: flex; gap: 4px; flex: 1; }
+  .nav-sup button { background: none; border: 0; font: inherit; font-size: 18px; font-weight: 500; color: var(--tinta-2); min-height: 48px; padding: 0 14px; border-radius: var(--radio-sm); cursor: pointer; transition: background-color 150ms ease, color 150ms ease; }
+  .nav-sup button:hover { color: var(--tinta); background: var(--superficie-2); }
+  .nav-sup button[aria-current="page"] { color: var(--tinta); background: var(--superficie-2); font-weight: 600; }
+  .nav-acciones { gap: 10px; }
+  .usuario-pc { display: inline-flex; align-items: center; gap: 8px; background: none; border: 0; font: inherit; font-weight: 600; color: var(--tinta-2); min-height: 48px; cursor: pointer; }
+  .avatar { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--verde); color: #fff; font-size: 16px; font-weight: 700; }
+  .btn-nav { display: inline-flex; min-height: 48px; padding: 0 16px; font-size: 18px; }
+
+  /* Contenido centrado y pie de página */
+  .content { padding: 36px 0 0; }
+  .contenedor { max-width: var(--ancho); margin: 0 auto; padding: 0 24px; }
+  .pie { display: block; margin-top: 56px; padding: 40px 24px 48px; }
+  .pie-rejilla { grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 32px; }
+  .titulo-pc { display: block; font-size: 2rem; letter-spacing: -.02em; margin: 0 0 20px; }
+  .snack { left: auto; right: 32px; bottom: 32px; max-width: 480px; }
+
+  /* Formularios y pantallas de una sola columna: más angostas y legibles */
+  .content:is([data-s="p04"], [data-s="p06"], [data-s="p12"], [data-s="p13"], [data-s="p14"], [data-s="p15"], [data-s="p21"], [data-s="p22"], [data-s="p23"], [data-s="p24"], [data-s="p25"], [data-s="p26"], [data-s="p27"], [data-s="p28"], [data-s="p17"], [data-s="p18"], [data-s="p19"]) .contenedor { max-width: 820px; }
+  .content:is([data-s="p02"], [data-s="p07"]) .contenedor {
+    max-width: 520px; background: var(--superficie); border: 1px solid var(--linea); border-radius: 18px;
+    box-shadow: var(--sombra); padding: 32px 36px; margin-top: 8px;
+  }
+  .content:is([data-s="p02"], [data-s="p07"]) .titulo-pc { display: none; }
+
+  /* Portada: texto a la izquierda y ejemplo a la derecha */
+  .heroe { grid-template-columns: 1.1fr 1fr; gap: 56px; align-items: center; padding: 20px 0 16px; }
+  .logo-heroe { width: 180px; }
+  .funciones { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .cta { grid-template-columns: 1fr auto; align-items: center; padding: 34px 40px; }
+
+  /* Panel: encabezado con los selectores a la derecha, indicadores en una fila y tarjetas en dos columnas */
+  .panel-cabeza { grid-template-columns: 1fr minmax(320px, 420px); align-items: end; gap: 24px; margin-bottom: 18px; }
+  .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.35fr); gap: 12px; }
+  .kpi-grande { grid-column: auto; }
+  .kpi-grande b { font-size: 2rem; }
+  .rejilla-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+
+/* Accesos rápidos en el teléfono: el principal a lo ancho y los demás en dos columnas */
+@media (max-width: 639px) {
+  .accesos { grid-template-columns: 1fr 1fr; }
+  .accesos .btn-primario, .accesos .btn-fantasma, .accesos .alert { grid-column: 1 / -1; }
+}
