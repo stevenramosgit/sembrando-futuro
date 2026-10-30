@@ -30,11 +30,15 @@ def _repetido(s: str) -> bool:
 
 
 def _basura(s: str) -> bool:
+    """Detecta textos sin sentido: palabras de relleno ('asdf', 'prueba') o secuencias del teclado."""
     bajo = s.lower()
     return bajo in BASURA or any(t in bajo for t in TECLADO)
 
 
 def _nombre_ok(s, minimo: int, maximo: int, coma: bool) -> bool:
+    """Comprueba un nombre de persona o de lugar: largo permitido, empieza con letra, solo letras, espacios, punto y guion
+    (y coma si se permite), sin signos repetidos y sin texto basura.
+    """
     if not isinstance(s, str):
         return False
     s = s.strip()
@@ -47,10 +51,12 @@ def _nombre_ok(s, minimo: int, maximo: int, coma: bool) -> bool:
 
 
 def v_nombre(s):
+    """Nombre completo: de 2 a 60 caracteres con letras (V-01). Devuelve None si es válido o el código del error."""
     return None if _nombre_ok(s, 2, 60, False) else "V-01"
 
 
 def v_ubicacion(s):
+    """Ubicación (municipio o vereda): de 3 a 60 caracteres; admite coma (V-02)."""
     return None if _nombre_ok(s, 3, 60, True) else "V-02"
 
 
@@ -60,6 +66,7 @@ def v_nombre_lugar(s):
 
 
 def v_correo(s):
+    """Correo con formato válido, de hasta 254 caracteres y sin texto basura antes de la arroba (V-03)."""
     if not isinstance(s, str):
         return "V-03"
     s = s.strip()
@@ -69,6 +76,7 @@ def v_correo(s):
 
 
 def _secuencia(s: str) -> bool:
+    """Detecta 5 caracteres seguidos en orden (abcde, 12345) o al revés, que hacen débil una clave."""
     bajo = s.lower()
     sube = baja = 1
     for i in range(1, len(bajo)):
@@ -99,6 +107,7 @@ def v_clave(clave, correo="", nombre=""):
 
 
 def v_observaciones(s):
+    """Observaciones opcionales de un gasto: hasta 150 caracteres con letras, números y puntuación básica (V-38)."""
     if s is None:
         return None
     if not isinstance(s, str):
@@ -110,6 +119,7 @@ def v_observaciones(s):
 
 
 def v_codigo_otp(s):
+    """El código de verificación debe tener exactamente 6 dígitos (V-09)."""
     return None if isinstance(s, str) and re.fullmatch(r"[0-9]{6}", s) else "V-09"
 
 
@@ -128,6 +138,7 @@ def decimal_de(valor, max_decimales: int):
 
 
 def entero_de(valor):
+    """Número entero de JSON (5 o 5.0); un booleano, un texto o un número con decimales devuelven None."""
     if isinstance(valor, bool):
         return None
     if isinstance(valor, int):
@@ -138,16 +149,19 @@ def entero_de(valor):
 
 
 def v_area_bruta(valor):
+    """Área bruta en hectáreas: de 0,0001 a 10.000 con hasta 4 decimales (V-24)."""
     d = decimal_de(valor, 4)
     return None if d is not None and Decimal("0.0001") <= d <= 10000 else "V-24"
 
 
 def v_pendiente(valor):
+    """Pendiente del terreno en porcentaje: de 0 a 100 con hasta 2 decimales (V-25)."""
     d = decimal_de(valor, 2)
     return None if d is not None and 0 <= d <= 100 else "V-25"
 
 
 def v_no_sembrable(valor, bruta):
+    """Área no sembrable: de 0 hasta menos que el área bruta, con hasta 4 decimales (V-26)."""
     d = decimal_de(valor, 4)
     b = decimal_de(bruta, 4)
     return None if d is not None and b is not None and 0 <= d < b else "V-26"
@@ -162,6 +176,7 @@ def v_vigencia(valor):
 
 
 def v_distancia(valor):
+    """Distancia de siembra en metros: de 0,01 a 10 con hasta 2 decimales (V-33)."""
     d = decimal_de(valor, 2)
     return None if d is not None and Decimal("0.01") <= d <= 10 else "V-33"
 
@@ -175,33 +190,40 @@ def v_valor_gasto(valor):
 
 
 def v_valor_jornal(valor):
+    """Valor de un jornal en pesos: entero de 1 a 50.000.000 (V-40)."""
     v = entero_de(valor)
     return None if v is not None and 1 <= v <= 50_000_000 else "V-40"
 
 
 def v_jornales(valor):
+    """Cantidad de jornales: de 0,5 a 999, en pasos de medio jornal (V-39)."""
     d = decimal_de(valor, 1)
     return None if d is not None and Decimal("0.5") <= d <= 999 and (d * 2) % 1 == 0 else "V-39"
 
 
 def v_cantidad(valor):
+    """Cantidad vendida en la unidad comercial del cultivo: de 0,1 a 10.000 (V-41)."""
     d = decimal_de(valor, 4)
     return None if d is not None and Decimal("0.1") <= d <= 10000 else "V-41"
 
 
 def v_precio(valor):
+    """Precio unitario en pesos: entero de 1 a 50.000.000 (V-42)."""
     v = entero_de(valor)
     return None if v is not None and 1 <= v <= 50_000_000 else "V-42"
 
 
 # ---------------------------------------------------------------- fechas
 def v_siembra(fecha: date, hoy: date):
+    """Fecha de siembra: desde el 1 de enero de 2020 hasta un año después de hoy (V-48)."""
     return None if INICIO_SIEMBRAS <= fecha <= un_anio_despues(hoy) else "V-48"
 
 
 def v_cierre(cierre: date, siembra: date, hoy: date):
+    """Fecha de cierre del ciclo: entre la siembra y hoy (V-29)."""
     return None if siembra <= cierre <= hoy else "V-29"
 
 
 def v_fecha_registro(fecha: date, siembra: date, hoy: date):
+    """Fecha de un gasto, jornal o ingreso: entre la siembra del ciclo y hoy (V-47)."""
     return None if siembra <= fecha <= hoy else "V-47"

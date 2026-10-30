@@ -20,22 +20,27 @@ HORAS_CUENTA = 24
 
 
 def normalizar_correo(correo) -> str:
+    """Correo sin espacios a los lados y en minúsculas (así se guarda y se compara)."""
     return correo.strip().lower() if isinstance(correo, str) else ""
 
 
 def _nuevo_id() -> str:
+    """Identificador UUID nuevo."""
     return str(uuid.uuid4())
 
 
 def _vencida(usuario: Usuario) -> bool:
+    """Una cuenta pendiente vence si pasaron más de 24 horas sin verificar el código."""
     return usuario.estado == "PENDIENTE" and ahora() - usuario.creado_en > timedelta(hours=HORAS_CUENTA)
 
 
 def _error_campo(codigo: str, **valores) -> tuple[str, str]:
+    """Par (código, mensaje) para un error de campo."""
     return codigo, texto(codigo, **valores)
 
 
 def _crear_token(db: Session, usuario_id: str, tipo: str) -> tuple[str, datetime]:
+    """Crea un token (sesión o activación), guarda solo su huella y devuelve el token en claro y su vencimiento."""
     token = seguridad.generar_token()
     expira = seguridad.expira_token(tipo)
     db.add(Token(id_token=_nuevo_id(), id_usuario=usuario_id, token_hash=seguridad.hash_token(token), tipo=tipo,
@@ -44,6 +49,7 @@ def _crear_token(db: Session, usuario_id: str, tipo: str) -> tuple[str, datetime
 
 
 def _crear_otp(db: Session, usuario: Usuario, reenvios: int) -> tuple[Otp, str]:
+    """Crea un código de 6 dígitos que vence en 15 minutos, guarda su huella y devuelve la fila y el código para enviarlo."""
     codigo = seguridad.generar_codigo_otp()
     momento = ahora()
     otp = Otp(id_otp=_nuevo_id(), id_usuario=usuario.id_usuario, codigo_hash=seguridad.hash_otp(codigo), enviado_en=momento,
@@ -54,6 +60,7 @@ def _crear_otp(db: Session, usuario: Usuario, reenvios: int) -> tuple[Otp, str]:
 
 
 def _otp_vigente(db: Session, usuario_id: str) -> Otp | None:
+    """El último código sin usar de la cuenta (o None)."""
     return db.scalar(select(Otp).where(Otp.id_usuario == usuario_id, Otp.usado.is_(False))
                      .order_by(Otp.enviado_en.desc()).limit(1))
 
@@ -69,6 +76,9 @@ def _liberar_si_vencido(db: Session, correo: str) -> Usuario | None:
 
 
 def _comprobar_correo_libre(db: Session, correo: str) -> None:
+    """Si el correo ya tiene una cuenta responde 409: activa (V-05) o pendiente de verificar (V-06).
+    Una cuenta pendiente vencida se borra antes, para liberar el correo.
+    """
     usuario = _liberar_si_vencido(db, correo)
     if usuario is not None:
         raise ErrorApi(409, "V-05" if usuario.estado == "ACTIVA" else "V-06")
@@ -76,6 +86,9 @@ def _comprobar_correo_libre(db: Session, correo: str) -> None:
 
 # ---------------------------------------------------------------------------- A-01
 def registrar(db: Session, d) -> dict:
+    """A-01: valida todos los campos (y junta sus errores), exige la autorización de datos, guarda la cuenta PENDIENTE
+    con la clave en Argon2, envía el código por Brevo y devuelve el token de activación. Si el correo falla, no se guarda nada.
+    """
     limpieza_service.limpiar_liviano(db)
     nombre = d.nombre.strip() if isinstance(d.nombre, str) else d.nombre
     ubicacion = d.ubicacion.strip() if isinstance(d.ubicacion, str) else d.ubicacion
@@ -115,10 +128,12 @@ def registrar(db: Session, d) -> dict:
 
 # ---------------------------------------------------------------------------- A-02
 def _verificar_hash(hash_guardado: str, codigo: str) -> bool:
+    """Compara la huella del código escrito con la guardada, en tiempo constante."""
     return hmac.compare_digest(hash_guardado, seguridad.hash_otp(codigo))
 
 
 def verificar_otp(db: Session, usuario: Usuario, codigo) -> dict:
+    """A-02: aplica la regla de verificación (vigencia de 15 minutos, 5 intentos) y, si el código es correcto, activa la cuenta."""
     otp = _otp_vigente(db, usuario.id_usuario)
     if otp is None:
         # El código fue anulado por un reenvío fallido o ya se usó: se pide uno nuevo.
@@ -166,10 +181,12 @@ def _comprobar_reenvio(otp: Otp | None) -> int:
 
 
 def _ultimo_otp(db: Session, usuario_id: str) -> Otp | None:
+    """El último código enviado a la cuenta, usado o no (para contar los reenvíos)."""
     return db.scalar(select(Otp).where(Otp.id_usuario == usuario_id).order_by(Otp.enviado_en.desc()).limit(1))
 
 
 def _emitir_nuevo_codigo(db: Session, usuario: Usuario, usados: int) -> dict:
+    """Anula los códigos anteriores, crea uno nuevo y lo envía; si Brevo falla se deshace todo y responde 503 (V-45)."""
     for anterior in db.scalars(select(Otp).where(Otp.id_usuario == usuario.id_usuario, Otp.usado.is_(False))):
         anterior.usado = True
     otp, codigo = _crear_otp(db, usuario, usados + 1)
@@ -184,11 +201,13 @@ def _emitir_nuevo_codigo(db: Session, usuario: Usuario, usados: int) -> dict:
 
 
 def reenviar_otp(db: Session, usuario: Usuario) -> dict:
+    """A-03: comprueba la espera de 60 segundos y el máximo de 3 reenvíos, y envía un código nuevo."""
     usados = _comprobar_reenvio(_ultimo_otp(db, usuario.id_usuario))
     return _emitir_nuevo_codigo(db, usuario, usados)
 
 
 def cambiar_correo(db: Session, usuario: Usuario, d) -> dict:
+    """A-04: valida el correo nuevo y su confirmación, comprueba que esté libre, lo cambia y envía allí un código nuevo."""
     nuevo = normalizar_correo(d.correo_nuevo)
     if v.v_correo(d.correo_nuevo):
         raise ErroresDeCampos({"correo_nuevo": _error_campo("V-03")})
@@ -207,10 +226,12 @@ def cambiar_correo(db: Session, usuario: Usuario, d) -> dict:
 
 # ---------------------------------------------------------------------------- A-05 y A-06
 def _hora_local(momento: datetime) -> str:
+    """Hora de Colombia en formato HH:MM, para decir hasta qué hora dura el bloqueo."""
     return momento.replace(tzinfo=timezone.utc).astimezone(COLOMBIA).strftime("%H:%M")
 
 
 def _verificar_clave_guardada(hash_guardado, clave) -> bool:
+    """Adaptador entre la regla de acceso (dominio) y la verificación Argon2."""
     return seguridad.verificar_clave(clave, hash_guardado)
 
 
@@ -239,6 +260,9 @@ def _guardar_intentos(db: Session, usuario, intento, correo: str, cuenta: dict, 
 
 
 def _rechazar_acceso(db: Session, codigo: str, usuario, cuenta: dict) -> None:
+    """Responde el error de ingreso que decidió la regla: bloqueo hasta HH:MM (423, V-18), cuenta sin verificar (V-19,
+    que se borra si ya venció) o correo o clave incorrectos (401, V-17), sin decir cuál de los dos falló.
+    """
     if codigo == "V-18":
         hasta = cuenta["bloqueado_hasta"]
         raise ErrorApi(423, "V-18", extra={"bloqueado_hasta": a_iso(hasta)}, hora=_hora_local(hasta))
@@ -256,6 +280,9 @@ def _rechazar_acceso(db: Session, codigo: str, usuario, cuenta: dict) -> None:
 
 
 def iniciar_sesion(db: Session, d) -> dict:
+    """A-05: aplica la regla de acceso (5 fallos bloquean 15 minutos), guarda los intentos y, si todo está bien,
+    crea el token de sesión de 30 días.
+    """
     limpieza_service.limpiar_liviano(db)
     correo = normalizar_correo(d.correo)
     clave = d.clave
@@ -278,5 +305,6 @@ def iniciar_sesion(db: Session, d) -> dict:
 
 
 def cerrar_sesion(db: Session, token: Token) -> None:
+    """A-06: revoca el token de la sesión actual."""
     token.revocado = True
     db.commit()

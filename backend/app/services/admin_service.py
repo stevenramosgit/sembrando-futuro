@@ -13,6 +13,7 @@ from app.models.usuario import IntentoIngreso, Token, Usuario
 
 
 def _agricultor(db: Session, id_usuario: str) -> Usuario:
+    """Busca una cuenta de agricultor por su identificador; si no existe o es el administrador responde 404 (E-07)."""
     usuario = db.get(Usuario, id_usuario)
     if usuario is None or usuario.rol != "AGRICULTOR":
         raise ErrorApi(404, "E-07")
@@ -20,6 +21,7 @@ def _agricultor(db: Session, id_usuario: str) -> Usuario:
 
 
 def listar(db: Session, estado: str | None, pagina: int, limite: int) -> dict:
+    """Lista las cuentas de agricultores ordenadas por fecha de creación, con filtro de estado y paginación."""
     filtro = [Usuario.rol == "AGRICULTOR"]
     if estado:
         filtro.append(Usuario.estado == estado)
@@ -32,6 +34,7 @@ def listar(db: Session, estado: str | None, pagina: int, limite: int) -> dict:
 
 
 def cambiar_clave(db: Session, id_usuario: str, clave_nueva) -> None:
+    """Valida y guarda la clave nueva, quita el bloqueo y revoca todas las sesiones de la cuenta."""
     usuario = _agricultor(db, id_usuario)
     if v.v_clave(clave_nueva, usuario.correo, usuario.nombre):
         raise ErroresDeCampos({"clave_nueva": ("V-07", texto("V-07"))})
@@ -45,6 +48,7 @@ def cambiar_clave(db: Session, id_usuario: str, clave_nueva) -> None:
 
 
 def eliminar(db: Session, id_usuario: str) -> None:
+    """Borra la cuenta con todos sus datos (cascada en la base) y los intentos de ingreso de su correo. El administrador no se borra (E-09)."""
     usuario = db.get(Usuario, id_usuario)
     if usuario is None:
         raise ErrorApi(404, "E-07")
@@ -56,6 +60,7 @@ def eliminar(db: Session, id_usuario: str) -> None:
 
 
 def resumen(db: Session, id_usuario: str) -> dict:
+    """Cuenta las fincas, ciclos y movimientos de una cuenta y lista sus fincas con los ciclos activos de cada una."""
     usuario = _agricultor(db, id_usuario)
     fincas = []
     totales = {"fincas": 0, "ciclos": 0, "gastos": 0, "jornales": 0, "ingresos": 0}

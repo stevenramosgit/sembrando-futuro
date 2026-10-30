@@ -32,7 +32,9 @@ _ID = re.compile(r"^[A-Za-z0-9_-]{1,36}$")
 
 
 class Rechazo(Exception):
+    """Un registro de la sincronización no cumple una regla: se rechaza solo ese registro, los demás siguen."""
     def __init__(self, codigo: str, **valores):
+        """codigo: regla incumplida (V-xx o E-xx); valores: datos para completar el mensaje."""
         self.codigo = codigo
         self.valores = valores
 
@@ -48,6 +50,7 @@ def _dueno(db: Session, tipo: str, id_: str) -> str | None:
 
 
 def _dueno_de_fila(db: Session, tipo: str, fila) -> str:
+    """Sube por los padres (movimiento → ciclo → finca) hasta llegar a la finca y devuelve su dueño."""
     while tipo != "finca":
         _, _, modelo_padre = PADRE[tipo]
         fila = db.get(modelo_padre, getattr(fila, _fk(tipo)))
@@ -56,16 +59,19 @@ def _dueno_de_fila(db: Session, tipo: str, fila) -> str:
 
 
 def _fk(tipo: str) -> str:
+    """Nombre de la columna que apunta al padre de cada tipo de registro."""
     return {"ciclo": "id_finca", "ciclo_cultivo": "id_ciclo", "gasto": "id_ciclo", "jornal": "id_ciclo",
             "ingreso": "id_ciclo"}[tipo]
 
 
 def _tipo_padre(tipo: str) -> str:
+    """Tipo del padre de cada tipo de registro (el ciclo es hijo de la finca; los demás, del ciclo)."""
     return {"ciclo": "finca", "ciclo_cultivo": "ciclo", "gasto": "ciclo", "jornal": "ciclo", "ingreso": "ciclo"}[tipo]
 
 
 # ---------------------------------------------------------------------------- serialización
 def _num(valor):
+    """Convierte un decimal en número JSON (o None)."""
     return None if valor is None else float(valor)
 
 
@@ -98,10 +104,12 @@ def a_registro(tipo: str, fila) -> dict:
 
 # ---------------------------------------------------------------------------- validación por tipo
 def _texto_o_none(valor):
+    """Devuelve el valor si es texto; si no, None (así un número no pasa como nombre)."""
     return valor if isinstance(valor, str) else None
 
 
 def _fecha(datos, campo="fecha"):
+    """Lee una fecha AAAA-MM-DD de los datos; si no es válida rechaza el registro (V-28)."""
     f = leer_fecha(datos.get(campo))
     if f is None:
         raise Rechazo("V-28")
@@ -109,6 +117,7 @@ def _fecha(datos, campo="fecha"):
 
 
 def _validar_finca(db, datos, existente, padre, usuario):
+    """Valida el nombre de la finca (V-22) y devuelve los valores a guardar."""
     nombre = _texto_o_none(datos.get("nombre"))
     if v.v_nombre_lugar(nombre):
         raise Rechazo("V-22")
@@ -125,6 +134,7 @@ def _validar_nombre_lote(datos):
 
 
 def _validar_estado_ciclo(datos, siembra, hoy):
+    """Valida el estado del ciclo y, si está CERRADO, la fecha de cierre (entre la siembra y hoy)."""
     estado = datos.get("estado", "ACTIVO")
     if estado not in ("ACTIVO", "CERRADO"):
         raise Rechazo("E-03")
@@ -162,6 +172,7 @@ def _validar_ciclo(db, datos, existente, padre, usuario):
 
 
 def _cultivo_por_codigo(db, codigo):
+    """Busca un cultivo del catálogo por su código (sin importar mayúsculas)."""
     return db.scalar(select(Cultivo).where(Cultivo.codigo == codigo.upper())) if isinstance(codigo, str) else None
 
 
@@ -200,11 +211,13 @@ def _comprobar_ciclo_abierto(ciclo: Ciclo, updated_at: datetime):
 
 
 def _fecha_registro(fecha: date, ciclo: Ciclo):
+    """La fecha de un movimiento debe estar entre la siembra del ciclo y hoy (V-47)."""
     if v.v_fecha_registro(fecha, ciclo.fecha_siembra, fechas.hoy()):
         raise Rechazo("V-47")
 
 
 def _validar_gasto(db, datos, existente, padre: Ciclo, usuario, updated_at=None):
+    """Valida un gasto: fecha, ciclo abierto, categoría (V-37), valor y observaciones."""
     fecha = _fecha(datos)
     _comprobar_ciclo_abierto(padre, updated_at)
     if datos.get("categoria") not in v.CATEGORIAS:
@@ -221,6 +234,7 @@ def _validar_gasto(db, datos, existente, padre: Ciclo, usuario, updated_at=None)
 
 
 def _validar_jornal(db, datos, existente, padre: Ciclo, usuario, updated_at=None):
+    """Valida un jornal: fecha, ciclo abierto, cantidad en medios jornales (V-39) y valor diario (V-40)."""
     fecha = _fecha(datos)
     _comprobar_ciclo_abierto(padre, updated_at)
     if v.v_jornales(datos.get("jornales")):
@@ -245,6 +259,7 @@ def _cultivo_del_ingreso(db, datos, padre: Ciclo) -> Cultivo:
 
 
 def _validar_ingreso(db, datos, existente, padre: Ciclo, usuario, updated_at=None):
+    """Valida un ingreso: fecha, ciclo abierto, cultivo del ciclo, cantidad (V-41) y precio (V-42)."""
     fecha = _fecha(datos)
     _comprobar_ciclo_abierto(padre, updated_at)
     cultivo = _cultivo_del_ingreso(db, datos, padre)
@@ -265,6 +280,9 @@ CON_MARCA_DE_TIEMPO = MOVIMIENTOS + ("ciclo_cultivo",)  # su validador comprueba
 
 # ---------------------------------------------------------------------------- S-01
 def _prevalidar(registros) -> list[tuple[str, str, datetime]]:
+    """Revisa el lote completo antes de aplicar nada: máximo 500 registros (E-04), identificadores UUID, fechas de
+    modificación ISO 8601 y tipos conocidos.
+    """
     if len(registros) > MAX_REGISTROS:
         raise ErrorApi(400, "E-04")
     leidos = []
@@ -310,6 +328,7 @@ def _resolver_padre(db: Session, usuario: Usuario, tipo: str, r, existente):
 
 
 def _crear_fila(db: Session, usuario: Usuario, tipo: str, r, valores: dict, padre, updated_at: datetime) -> None:
+    """Crea la fila nueva con el UUID que generó el teléfono y la enlaza con su dueño o con su padre."""
     fila = MODELOS[tipo](**{PK[tipo]: r.id}, **valores, updated_at=updated_at)
     if tipo in MOVIMIENTOS:
         fila.eliminado = False
@@ -321,6 +340,7 @@ def _crear_fila(db: Session, usuario: Usuario, tipo: str, r, valores: dict, padr
 
 
 def _actualizar_fila(tipo: str, existente, valores: dict, updated_at: datetime) -> None:
+    """Copia los valores nuevos en la fila existente y su fecha de modificación."""
     for k, val in valores.items():
         setattr(existente, k, val)
     existente.updated_at = updated_at
@@ -329,6 +349,9 @@ def _actualizar_fila(tipo: str, existente, valores: dict, updated_at: datetime) 
 
 
 def _aplicar(db: Session, usuario: Usuario, r, updated_at: datetime) -> dict:
+    """Aplica un registro. Regla de conflictos: gana la versión con la fecha de modificación más reciente; si la del servidor
+    es igual o más nueva, responde ACTUALIZADO_POR_SERVIDOR con su copia para que el teléfono la adopte.
+    """
     tipo = r.tipo
     existente = db.get(MODELOS[tipo], r.id)
     if tipo in NO_ELIMINABLES and r.eliminado:
@@ -361,6 +384,9 @@ def _aplicar(db: Session, usuario: Usuario, r, updated_at: datetime) -> dict:
 
 
 def push(db: Session, usuario: Usuario, entrada) -> dict:
+    """S-01: valida el lote y la propiedad de los registros, los aplica en orden de dependencia (finca, ciclo, cultivos,
+    movimientos) y devuelve un resultado por registro. Un registro rechazado no impide guardar los demás.
+    """
     leidos = _prevalidar(entrada.registros)
     _comprobar_propiedad(db, usuario, entrada.registros)
     resultados: dict[int, dict] = {}
@@ -383,11 +409,13 @@ def push(db: Session, usuario: Usuario, entrada) -> dict:
 
 
 def _rechazado(id_: str, codigo: str, **valores) -> dict:
+    """Resultado RECHAZADO de un registro, con el código y el mensaje de la regla."""
     return {"id": id_, "estado": "RECHAZADO", "codigo": codigo, "mensaje": texto(codigo, **valores)}
 
 
 # ---------------------------------------------------------------------------- S-02
 def _consulta_usuario(tipo: str, usuario_id: str):
+    """Consulta que filtra las filas de un tipo que pertenecen al usuario (siguiendo finca → ciclo)."""
     modelo = MODELOS[tipo]
     q = select(modelo)
     if tipo == "finca":
@@ -399,6 +427,7 @@ def _consulta_usuario(tipo: str, usuario_id: str):
 
 
 def _leer_tipo(db: Session, usuario: Usuario, tipo: str, corte, hasta=None, tope=None):
+    """Lee las filas de un tipo del usuario modificadas entre 'corte' y 'hasta', ordenadas por fecha, con un tope."""
     modelo = MODELOS[tipo]
     q = _consulta_usuario(tipo, usuario.id_usuario)
     if corte is not None:
@@ -412,12 +441,14 @@ def _leer_tipo(db: Session, usuario: Usuario, tipo: str, corte, hasta=None, tope
 
 
 def _hay_mas_despues(db: Session, usuario: Usuario, hasta) -> bool:
+    """Indica si quedan registros posteriores a la página entregada (para que el teléfono pida otra)."""
     return any(
         db.scalar(_consulta_usuario(tipo, usuario.id_usuario).where(MODELOS[tipo].updated_at > hasta).limit(1)) is not None
         for tipo in ORDEN)
 
 
 def pull(db: Session, usuario: Usuario, desde: str | None, limite: int) -> dict:
+    """S-02: valida 'desde' y 'limite', reúne los cambios del usuario en orden de dependencia y los entrega por páginas."""
     if limite < 1 or limite > MAX_REGISTROS:
         raise ErrorApi(400, "E-03")
     corte = None

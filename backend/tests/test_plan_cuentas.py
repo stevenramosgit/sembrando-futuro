@@ -318,6 +318,7 @@ def test_CP_RF_02_16(cliente):
 def test_CP_RF_02_17(cliente):
     def correo(n):
         return "a" * (n - len("@correo.com")) + "@correo.com"
+
     # el límite de la parte local es 64; 254 y 255 se arman con etiquetas de dominio de hasta 63 caracteres
     def largo(n):
         base = "ana@"
@@ -357,7 +358,7 @@ def test_CP_RF_02_20(cliente):
     for i in range(6):
         estados.append(registrar(cliente, correo=f"u{i}@correo.com", correo_confirmacion=f"u{i}@correo.com").status_code)
     ultimo = registrar(cliente, correo="u5@correo.com", correo_confirmacion="u5@correo.com")
-    assert estados[:5] == [201] * 5 and estados[5] == 429
+    assert estados[:5] == [201] * 5 and estados[5] == 429 and ultimo.status_code == 429
     obs(f"A-01 seis veces desde la misma IP: {estados}; la 6.ª responde 429 E-10")
 
 

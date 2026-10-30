@@ -1,3 +1,4 @@
+"""Modelos de SQLAlchemy: una clase por tabla del modelo entidad-relación (documento 12)."""
 from app.models.usuario import IntentoIngreso, Otp, Token, Usuario  # noqa: F401
 from app.models.cultivo import Cultivo  # noqa: F401
 from app.models.finca import Finca  # noqa: F401

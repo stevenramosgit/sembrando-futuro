@@ -13,19 +13,28 @@ from app.models.usuario import Usuario
 
 
 def _num(x):
+    """Convierte un decimal de la base en número JSON (o None)."""
     return None if x is None else float(x)
 
 
 def _ficha(cultivo):
+    """Ficha técnica del cultivo como diccionario, para las fórmulas de costos y de proyección."""
     f = cultivo.ficha
     if f is None:
         return None
     return {"base_plantas": f.base_plantas, "costo_hoyado_cop": int(f.costo_hoyado_cop),
             "costo_colino_cop": int(f.costo_colino_cop), "insumo_anual_cop": int(f.insumo_anual_cop),
-            "jornales_limpieza_anio": float(f.jornales_limpieza_anio), "jornales_riego_anio": float(f.jornales_riego_anio)}
+            "jornales_limpieza_anio": float(f.jornales_limpieza_anio), "jornales_riego_anio": float(f.jornales_riego_anio),
+            "meses_primera_cosecha": f.meses_primera_cosecha, "meses_cosecha": f.meses_cosecha, "cosecha_unica": bool(f.cosecha_unica),
+            "produccion_base": None if f.produccion_base is None else float(f.produccion_base),
+            "precio_ref_cop": None if f.precio_ref_cop is None else int(f.precio_ref_cop),
+            "precio_ref_fecha": f.precio_ref_fecha.isoformat() if f.precio_ref_fecha else None}
 
 
 def resumen_ciclo(db: Session, usuario: Usuario, id_ciclo: str) -> dict:
+    """R-01: comprueba que el ciclo sea del usuario (si no, 403 E-02), suma gastos, jornales e ingresos no eliminados
+    y calcula matas, utilidad, rentabilidad, utilidad por hectárea y la proyección de cosecha de cada cultivo.
+    """
     ciclo = db.get(Ciclo, id_ciclo)
     if ciclo is None:
         raise ErrorApi(404, "E-07")
@@ -51,14 +60,17 @@ def resumen_ciclo(db: Session, usuario: Usuario, id_ciclo: str) -> dict:
         if cc.marco and cc.dist_a_m is not None:
             r = formulas.matas_por_hectarea(cc.marco, float(cc.dist_a_m), float(cc.dist_b_m) if cc.dist_b_m is not None else 0, None)
             if r[0] == "ok":
-                matas = formulas.matas_por_lote(r[1], ciclo.area_efectiva_ha)
+                matas = formulas.matas_del_ciclo(cc.marco, float(cc.dist_a_m), float(cc.dist_b_m) if cc.dist_b_m is not None else 0, ciclo.area_efectiva_ha)
                 total_matas = (total_matas or 0) + matas
         ficha = _ficha(cc.cultivo)
         estimado = formulas.estimar_costos(ficha, matas) if ficha and matas is not None else None
+        proyeccion = formulas.proyectar_cosecha(ficha, matas, ciclo.fecha_siembra) if ficha and matas is not None else None
+        if proyeccion:
+            proyeccion["primera_cosecha"] = proyeccion["primera_cosecha"].isoformat()
         cultivos.append({"codigo": cc.cultivo.codigo, "nombre": cc.cultivo.nombre,
                          "unidad_comercial": cc.cultivo.unidad_comercial, "marco": cc.marco,
                          "dist_a_m": _num(cc.dist_a_m), "dist_b_m": _num(cc.dist_b_m), "matas": matas,
-                         "estimado_ficha": estimado})
+                         "estimado_ficha": estimado, "proyeccion": proyeccion})
 
     fin, restantes, semaforo = formulas.semaforo_vigencia(ciclo.fecha_siembra, ciclo.vigencia_anios, fechas.hoy())
     ciclo_datos = {"id": ciclo.id_ciclo, "estado": ciclo.estado, "nombre_lote": ciclo.nombre_lote,

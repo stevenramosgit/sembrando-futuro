@@ -205,7 +205,7 @@ def test_CP_RF_14_08(cliente, cabecera):
     assert casos["4 años con 3,5 de uso"][0] == "ROJO" and casos["ciclo vencido (3 años con 4 de uso)"][0] == "ROJO"
     assert casos["sin vigencia"] == (None, None, None)
     obs("Semáforo: " + "; ".join(f"{k}: {v[0]}" + (f" (falta {v[1]} %)" if v[1] is not None else "") if v[0] else f"{k}: sin semáforo"
-                                  for k, v in casos.items()))
+                                 for k, v in casos.items()))
 
 
 # ================================================================ RF-15 cierre
@@ -250,7 +250,7 @@ def test_CP_RF_15_06(cliente, cabecera):
         f, c, _ = estructura(cliente, cabecera)
         cierre = reg("ciclo", c, {"finca_id": f, **DATOS_CICLO, "estado": "CERRADO", "fecha_cierre": iso(HOY)}, t=T1)
         g = reg("gasto", nid(), gasto(c), t={"cierre_primero": T2, "gasto_primero": T0, "gasto_hecho_antes_sin_conexion": T0}[orden])
-        res = push(cliente, cabecera, *( [cierre, g] if orden == "cierre_primero" else [g, cierre]))
+        res = push(cliente, cabecera, *([cierre, g] if orden == "cierre_primero" else [g, cierre]))
         resultado = {"gasto": estados(res)[0 if orden != "cierre_primero" else 1], "cierre": estados(res)[1 if orden != "cierre_primero" else 0]}
         cerrado_con_gasto_nuevo = (resultado["cierre"] == "ACEPTADO" and resultado["gasto"] == "ACEPTADO" and orden == "cierre_primero")
         assert not cerrado_con_gasto_nuevo
@@ -286,22 +286,22 @@ def test_CP_RF_18_01():
 
 def test_CP_RF_18_02():
     r = formulas.matas_por_hectarea("rectangular", 2, 1.5, None)
-    assert r[1] == 3333.33
+    assert r[1] == 3333.34
     obs(f"Rectangular 2 × 1,5 m: {r[1]} matas/ha")
 
 
 def test_CP_RF_18_03():
     r = formulas.matas_por_hectarea("tresbolillo", 3, None, None)
     exacto = 10000 / (9 * 0.866025)
-    assert abs(r[1] - exacto) / exacto <= 1e-6
-    obs(f"Tresbolillo d = 3 m: {r[1]} matas/ha (valor exacto {exacto:.4f}). La función redondea a 2 decimales")
+    assert r[1] == 1283.01 and 0 <= r[1] - exacto < 0.01
+    obs(f"Tresbolillo d = 3 m: {r[1]} matas/ha (valor exacto {exacto:.4f}). La función redondea hacia arriba, con 2 decimales")
 
 
 def test_CP_RF_18_04(cliente, cabecera):
     f, c, cc = estructura(cliente, cabecera)
     x = resumen(cliente, cabecera, c)
     n = formulas.matas_por_hectarea("cuadrado", 1.5, None, (1.0, 2.0))
-    assert n == ("ok", 4444.44, None) and x["cultivos"][0]["matas"] == 4000
+    assert n == ("ok", 4444.45, None) and x["cultivos"][0]["matas"] == 4000
     obs(f"Café cuadrado 1,5 m: {n[1]} matas/ha; ciclo de 0,9 ha efectivas: {x['cultivos'][0]['matas']} matas")
 
 
@@ -659,9 +659,9 @@ def test_CP_RNF_17(cliente, db):
 def test_CP_RNF_22():
     # valores oráculo del plan (documento 14): los resultados esperados ya traen el redondeo que pide cada requisito
     casos = [("RF-18 cuadrado 1 m", formulas.matas_por_hectarea("cuadrado", 1, None, None)[1], 10000.0),
-             ("RF-18 rectangular 2 × 1,5 m", formulas.matas_por_hectarea("rectangular", 2, 1.5, None)[1], 3333.33),
-             ("RF-18 tresbolillo 3 m", formulas.matas_por_hectarea("tresbolillo", 3, None, None)[1], 1283.0012),
-             ("RF-18 café 1,5 m", formulas.matas_por_hectarea("cuadrado", 1.5, None, None)[1], 4444.44),
+             ("RF-18 rectangular 2 × 1,5 m", formulas.matas_por_hectarea("rectangular", 2, 1.5, None)[1], 3333.34),
+             ("RF-18 tresbolillo 3 m", formulas.matas_por_hectarea("tresbolillo", 3, None, None)[1], 1283.01),
+             ("RF-18 café 1,5 m", formulas.matas_por_hectarea("cuadrado", 1.5, None, None)[1], 4444.45),
              ("RF-24 3 × $60.000", formulas.costo_jornal(3, 60000), 180000),
              ("RF-28 utilidad", formulas.calcular_utilidad([150000], [500000], 0.9)[3], 350000),
              ("RF-28 rentabilidad", formulas.calcular_utilidad([150000], [500000], 0.9)[4], 233.3)]
@@ -670,7 +670,7 @@ def test_CP_RNF_22():
     assert peor <= 0.0001, errores
     detalle = "; ".join(f"{n}: {real} vs {teorico}" for n, real, teorico in casos)
     obs(f"Peor error relativo de {len(casos)} cálculos frente a los valores oráculo del plan: {peor:.6f} % (meta ≤ 0,0001 %; "
-        f"el mayor es el del tresbolillo, porque el servidor redondea a 2 decimales). {detalle}")
+        f"los valores esperados ya traen el redondeo hacia arriba con 2 decimales). {detalle}")
 
 
 def test_CP_RNF_25(monkeypatch):

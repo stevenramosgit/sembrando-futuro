@@ -11,6 +11,7 @@ HORAS_VIGENCIA_CUENTA = 24
 
 
 def _igual(real, dado):
+    """Comparación simple que usan las pruebas sin base de datos; el servidor la reemplaza por la verificación Argon2."""
     return real == dado
 
 

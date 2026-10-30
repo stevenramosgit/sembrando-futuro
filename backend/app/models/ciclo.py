@@ -10,6 +10,9 @@ from app.models.tipos import FechaHora6
 
 
 class Ciclo(Base):
+    """Fila de la tabla CICLO: un ciclo de cultivo en una finca (antes llamado lote). Guarda el área bruta, el área
+    no sembrable, el área efectiva calculada, la pendiente, la fecha de siembra, los años de vigencia y el estado (ACTIVO o CERRADO).
+    """
     __tablename__ = "ciclo"
     __table_args__ = (
         CheckConstraint("pendiente_pct >= 0 AND pendiente_pct <= 100", name="ck_ciclo_pendiente"),

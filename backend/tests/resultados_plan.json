@@ -17,11 +17,11 @@
  },
  "CB-05": {
   "estado": "Aprobado",
-  "obtenido": "Camino 1-2-3-6-7-9-10-11-13: cuadrado 1,5 m dentro del rango → ('ok', 4444.44, None): 4.444,44 matas/ha sin advertencia"
+  "obtenido": "Camino 1-2-3-6-7-9-10-11-13: cuadrado 1,5 m dentro del rango → ('ok', 4444.45, None): 4.444,45 matas/ha (hacia arriba) sin advertencia"
  },
  "CB-06": {
   "estado": "Aprobado",
-  "obtenido": "Camino 1-2-3-6-8-9-10-11-13: tresbolillo 1,5 m → ('ok', 5132.0, None): 5.132,00 matas/ha sin advertencia"
+  "obtenido": "Camino 1-2-3-6-8-9-10-11-13: tresbolillo 1,5 m → ('ok', 5132.01, None): 5.132,01 matas/ha (hacia arriba) sin advertencia"
  },
  "CB-07": {
   "estado": "Aprobado",
@@ -301,7 +301,7 @@
  },
  "CP-RF-14-03": {
   "estado": "Aprobado",
-  "obtenido": "Fecha de siembra: 2019-12-31 → V-48, 2020-01-01 → ACEPTADO, 2027-10-28 → ACEPTADO, 2027-10-29 → V-48"
+  "obtenido": "Fecha de siembra: 2019-12-31 → V-48, 2020-01-01 → ACEPTADO, 2027-10-29 → ACEPTADO, 2027-10-30 → V-48"
  },
  "CP-RF-14-04": {
   "estado": "Aprobado",
@@ -357,15 +357,15 @@
  },
  "CP-RF-18-02": {
   "estado": "Aprobado",
-  "obtenido": "Rectangular 2 × 1,5 m: 3333.33 matas/ha"
+  "obtenido": "Rectangular 2 × 1,5 m: 3333.34 matas/ha"
  },
  "CP-RF-18-03": {
   "estado": "Aprobado",
-  "obtenido": "Tresbolillo d = 3 m: 1283.0 matas/ha (valor exacto 1283.0012). La función redondea a 2 decimales"
+  "obtenido": "Tresbolillo d = 3 m: 1283.01 matas/ha (valor exacto 1283.0012). La función redondea hacia arriba, con 2 decimales"
  },
  "CP-RF-18-04": {
   "estado": "Aprobado",
-  "obtenido": "Café cuadrado 1,5 m: 4444.44 matas/ha; ciclo de 0,9 ha efectivas: 4000 matas"
+  "obtenido": "Café cuadrado 1,5 m: 4444.45 matas/ha; ciclo de 0,9 ha efectivas: 4000 matas"
  },
  "CP-RF-18-05": {
   "estado": "Aprobado",
@@ -378,6 +378,22 @@
  "CP-RF-18-07": {
   "estado": "Aprobado",
   "obtenido": "Distancia del marco cuadrado (m): 0.009 → V-33, 0.01 → ACEPTADO, 10 → ACEPTADO, 10.01 → V-33"
+ },
+ "CP-RF-18-08": {
+  "estado": "Aprobado",
+  "obtenido": "Café, 4.000 matas, siembra 15/03/2026: primera cosecha 2027-11-15; 10.0 cargas/año; ingreso $22,200,000 (temporadas abr–jun y oct–dic)"
+ },
+ "CP-RF-18-09": {
+  "estado": "Aprobado",
+  "obtenido": "Yuca, 3.000 matas, siembra 20/01/2026: cosecha única el 2026-11-20; 84.0 bultos; ingreso $5,733,000; sin temporadas"
+ },
+ "CP-RF-18-10": {
+  "estado": "Aprobado",
+  "obtenido": "Ficha sin datos de cosecha → proyección vacía (no se inventa nada); sin precio → producción sí, ingreso vacío"
+ },
+ "CP-RF-18-11": {
+  "estado": "Aprobado",
+  "obtenido": "1 ha con 1,5 m: 4.444,44 matas exactas → 4.445 (entera, hacia arriba); 0,9 ha → 4.000; N_ha 4.444,4401 → 4.444,45"
  },
  "CP-RF-23-01": {
   "estado": "Aprobado",
@@ -393,7 +409,7 @@
  },
  "CP-RF-23-05": {
   "estado": "Aprobado",
-  "obtenido": "Servidor: fecha «31/02/2026» RECHAZADA con V-28 «Escriba una fecha válida (día/mes/año).»"
+  "obtenido": "Servidor: fecha «31/02/2026» RECHAZADA con V-28 «Elija una fecha válida del calendario.»"
  },
  "CP-RF-24-01": {
   "estado": "Aprobado",
@@ -499,6 +515,14 @@
   "estado": "Aprobado",
   "obtenido": "Borrar el café (tiene ciclos): la base lo rechaza (llave foránea RESTRICT) y quedan 3 cultivos. Borrar la yuca (sin ciclos), solo en la base de pruebas: queda 2"
  },
+ "CP-RF-37-06": {
+  "estado": "Aprobado",
+  "obtenido": "C-01 publica el café: primera cosecha 20 meses, 2.5 cargas/1.000 plantas, $2,220,000 (2026-04-09); la yuca es de cosecha única"
+ },
+ "CP-RF-37-07": {
+  "estado": "Aprobado",
+  "obtenido": "AD-04 guarda 22 meses y temporadas ordenadas [4, 5, 10]; rechaza con E-08 meses 0 y 121, lista vacía o con 13 o repetidos, producción 0 o con 3 decimales, precio negativo o sobre 50.000.000 y fecha dd/mm/aaaa; una ficha sin esos campos no borra los guardados"
+ },
  "CP-RNF-09": {
   "estado": "Aprobado",
   "obtenido": "Nombre de usuario, finca y lote con «<script>…» y «' OR 1=1 --»: rechazados. Observaciones del gasto (texto libre): «<script>alert(1)</script>» → RECHAZADO; «' OR 1=1 --» → RECHAZADO. La pantalla muestra todo como texto (esc) — ver e2e_plan.cjs. OWASP ZAP: no se ejecutó"
@@ -513,11 +537,11 @@
  },
  "CP-RNF-17": {
   "estado": "Aprobado",
-  "obtenido": "Sin autorización: 400 V-08, no se crea cuenta. Con autorización: consentimiento = True guardado con fecha 2026-10-28 06:55"
+  "obtenido": "Sin autorización: 400 V-08, no se crea cuenta. Con autorización: consentimiento = True guardado con fecha 2026-10-29 05:57"
  },
  "CP-RNF-22": {
   "estado": "Aprobado",
-  "obtenido": "Peor error relativo de 7 cálculos frente a los valores oráculo del plan: 0.000094 % (meta ≤ 0,0001 %; el mayor es el del tresbolillo, porque el servidor redondea a 2 decimales). RF-18 cuadrado 1 m: 10000.0 vs 10000.0; RF-18 rectangular 2 × 1,5 m: 3333.33 vs 3333.33; RF-18 tresbolillo 3 m: 1283.0 vs 1283.0012; RF-18 café 1,5 m: 4444.44 vs 4444.44; RF-24 3 × $60.000: 180000 vs 180000; RF-28 utilidad: 350000 vs 350000; RF-28 rentabilidad: 233.3 vs 233.3"
+  "obtenido": "Peor error relativo de 7 cálculos frente a los valores oráculo del plan: 0.000000 % (meta ≤ 0,0001 %; los valores esperados ya traen el redondeo hacia arriba con 2 decimales). RF-18 cuadrado 1 m: 10000.0 vs 10000.0; RF-18 rectangular 2 × 1,5 m: 3333.34 vs 3333.34; RF-18 tresbolillo 3 m: 1283.01 vs 1283.01; RF-18 café 1,5 m: 4444.45 vs 4444.45; RF-24 3 × $60.000: 180000 vs 180000; RF-28 utilidad: 350000 vs 350000; RF-28 rentabilidad: 233.3 vs 233.3"
  },
  "CP-RNF-25": {
   "estado": "Aprobado",
@@ -661,7 +685,7 @@
  },
  "CP-V-18-ERR": {
   "estado": "Aprobado",
-  "obtenido": "5.º fallo: 423 V-18, bloqueo de 15 min hasta 2026-10-28T07:10:34.920Z «Cuenta bloqueada por 15 minutos. Intente de nuevo a las 02:10.»"
+  "obtenido": "5.º fallo: 423 V-18, bloqueo de 15 min hasta 2026-10-29T06:12:07.726Z «Cuenta bloqueada por 15 minutos. Intente de nuevo a las 01:12.»"
  },
  "CP-V-18-OK": {
   "estado": "Aprobado",
@@ -725,7 +749,7 @@
  },
  "CP-V-28-ERR": {
   "estado": "Aprobado",
-  "obtenido": "Fecha 31/02/2026: RECHAZADO V-28 «Escriba una fecha válida (día/mes/año).»"
+  "obtenido": "Fecha 31/02/2026: RECHAZADO V-28 «Elija una fecha válida del calendario.»"
  },
  "CP-V-28-OK": {
   "estado": "Aprobado",
@@ -769,7 +793,7 @@
  },
  "CP-V-34-OK": {
   "estado": "Aprobado",
-  "obtenido": "Distancia 1,5 m dentro del rango del café (1,0 a 2,0 m): ('ok', 4444.44, None), sin advertencia"
+  "obtenido": "Distancia 1,5 m dentro del rango del café (1,0 a 2,0 m): ('ok', 4444.45, None), sin advertencia"
  },
  "CP-V-35-ERR": {
   "estado": "Aprobado",

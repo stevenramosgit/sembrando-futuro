@@ -11,10 +11,14 @@ CATEGORIAS = ("semillas", "abonos", "agroquimicos", "herramientas", "transporte"
 
 
 def _ciclo_fk():
+    """Llave foránea al ciclo: si se borra el ciclo se borran sus movimientos (cascada)."""
     return mapped_column(ForeignKey("ciclo.id_ciclo", ondelete="CASCADE", onupdate="RESTRICT"), nullable=False, index=True)
 
 
 class Gasto(Base):
+    """Fila de la tabla GASTO: un gasto del ciclo con categoría, valor en pesos, fecha y observaciones opcionales.
+    No se borra de verdad: se marca 'eliminado' para que el borrado también llegue a los otros dispositivos.
+    """
     __tablename__ = "gasto"
     __table_args__ = (CheckConstraint("valor_cop >= 1 AND valor_cop <= 50000000", name="ck_gasto_valor"),)
 
@@ -31,6 +35,7 @@ class Gasto(Base):
 
 
 class Jornal(Base):
+    """Fila de la tabla JORNAL: días de trabajo pagados en el ciclo (cantidad de jornales y valor diario en pesos)."""
     __tablename__ = "jornal"
     __table_args__ = (
         CheckConstraint("cantidad_jornales >= 0.5 AND cantidad_jornales <= 999", name="ck_jornal_cantidad"),
@@ -49,6 +54,7 @@ class Jornal(Base):
 
 
 class Ingreso(Base):
+    """Fila de la tabla INGRESO: una venta de cosecha (cultivo, cantidad en su unidad comercial y precio unitario en pesos)."""
     __tablename__ = "ingreso"
     __table_args__ = (
         CheckConstraint("cantidad >= 0.1 AND cantidad <= 10000", name="ck_ingreso_cantidad"),

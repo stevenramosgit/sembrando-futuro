@@ -1,4 +1,4 @@
-"""La migración 0001 de Alembic crea exactamente el esquema que describen los modelos."""
+"""Las migraciones de Alembic (0001 y 0002) crean exactamente el esquema que describen los modelos."""
 import os
 
 from alembic import command

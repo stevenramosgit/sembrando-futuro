@@ -11,9 +11,12 @@ URL_BREVO = "https://api.brevo.com/v3/smtp/email"
 
 
 def texto_del_mensaje(nombre: str, codigo: str) -> tuple[str, str]:
+    """Asunto y texto del correo con el código: saluda por el primer nombre, dice que vence en 15 minutos y advierte
+    que no se comparta.
+    """
     primer_nombre = (nombre or "").split()[0] if (nombre or "").strip() else ""
     saludo = f"Hola, {primer_nombre}:" if primer_nombre else "Hola:"
-    cuerpo = (f"{saludo}\n\nSu código de verificación es {codigo}. Vale 15 minutos.\n\n"
+    cuerpo = (f"{saludo}\n\nSu código de verificación es {codigo}. El código vence en 15 minutos.\n\n"
               "Si usted no creó una cuenta, ignore este mensaje.\n"
               "Nunca comparta este código con nadie.")
     return "Su código de Sembrando Futuro", cuerpo

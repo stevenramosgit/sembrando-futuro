@@ -8,6 +8,9 @@ from app.database.connection import Base
 
 
 class Cultivo(Base):
+    """Fila de la tabla CULTIVO: un cultivo del catálogo (café, plátano, yuca) con su código, unidad comercial de venta,
+    rango de distancias recomendado, marcos permitidos y fuente técnica. Lo mantiene el administrador (AD-04).
+    """
     __tablename__ = "cultivo"
     __table_args__ = (
         CheckConstraint("distancia_min_m >= 0.01 AND distancia_min_m <= 10", name="ck_cultivo_min"),

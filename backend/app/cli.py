@@ -1,7 +1,9 @@
 """Comandos de administración (documento 20):  python -m app.cli <comando>
 
   crear_admin        crea la cuenta del administrador (pide correo y clave; solo puede existir una)
-  cargar_semilla     carga o actualiza el catálogo de cultivos y sus fichas técnicas (datos/semilla_catalogo.json, o --archivo)
+  cargar_semilla     carga el catálogo de cultivos y sus fichas técnicas (datos/semilla_catalogo.json, o --archivo).
+                     Inserta los cultivos nuevos y completa lo que falte, sin sobrescribir los cambios del administrador;
+                     con --forzar reemplaza todo con los valores del archivo
   listar_cuentas     lista las cuentas de agricultores (opcional --estado ACTIVA o PENDIENTE)
   resumen_cuenta     muestra las fincas y los conteos de una cuenta (--correo)
   cambiar_clave      cambia la clave de una cuenta (--correo; la clave nueva se pide o viene en CLAVE_NUEVA)
@@ -29,11 +31,16 @@ from app.database import connection
 from app.domain import formulas, validaciones as v
 from app.models import Ciclo, CicloCultivo, Cultivo, FichaTecnica, Finca, Gasto, Ingreso, Jornal, Otp, Usuario
 from app.services import admin_service, limpieza_service
+from app.services.catalogo_service import CAMPOS_PROYECCION
 
 RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "datos"))
 
 
 def crear_admin(db, correo: str, clave: str) -> Usuario:
+    """Crea la única cuenta de administrador, ya activa. Valida el correo y la clave con las mismas reglas del registro
+    (V-03 y V-07) y termina con un mensaje si ya existe un administrador (V-21) o si el correo está en uso (V-05).
+    El administrador solo se crea por consola: la aplicación no tiene una pantalla para hacerlo.
+    """
     correo = correo.strip().lower()
     if v.v_correo(correo):
         raise SystemExit(texto("V-03"))
@@ -51,42 +58,114 @@ def crear_admin(db, correo: str, clave: str) -> Usuario:
     return admin
 
 
-def cargar_semilla(db, ruta: str | None = None) -> int:
+CAMPOS_FICHA = ("base_plantas", "costo_hoyado_cop", "costo_colino_cop", "insumo_anual_cop",
+                "jornales_limpieza_anio", "jornales_riego_anio", "datos_extra")
+
+
+def _valores_cultivo(c: dict) -> dict:
+    """Toma del JSON de la semilla los datos generales de un cultivo (nombre, unidad, distancias, marcos y fuente)."""
+    return dict(nombre=c["nombre"], unidad_comercial=c["unidad_comercial"], distancia_min_m=c["distancia_min_m"],
+                distancia_max_m=c["distancia_max_m"], marcos_permitidos=c["marcos_permitidos"], fuente_tecnica=c["fuente_tecnica"])
+
+
+def _valores_ficha(ficha: dict) -> dict:
+    """Toma del JSON la ficha técnica (costos, jornales) y, si vienen, los datos de la proyección de cosecha."""
+    campos = {k: ficha[k] for k in CAMPOS_FICHA}
+    campos.update(_valores_proyeccion(ficha))
+    return campos
+
+
+def _valores_proyeccion(ficha: dict) -> dict:
+    """Datos de la proyección de cosecha que trae el JSON; la fecha del precio se convierte de texto a fecha."""
+    campos = {k: ficha[k] for k in CAMPOS_PROYECCION if k in ficha}
+    if campos.get("precio_ref_fecha"):
+        campos["precio_ref_fecha"] = date.fromisoformat(campos["precio_ref_fecha"])
+    return campos
+
+
+def _sin_proyeccion(ficha: FichaTecnica) -> bool:
+    """Una ficha no tiene proyección cuando le faltan los meses hasta la primera cosecha y la producción de referencia
+    (por ejemplo, una base creada antes de la migración 0002)."""
+    return ficha.meses_primera_cosecha is None and ficha.produccion_base is None
+
+
+def _aplicar(objeto, valores: dict) -> None:
+    """Copia cada valor del diccionario en el atributo del mismo nombre."""
+    for k, val in valores.items():
+        setattr(objeto, k, val)
+
+
+def _cultivo_nuevo(db, c: dict, momento) -> None:
+    """Inserta un cultivo que aún no existe en la base, con su ficha técnica si el JSON la trae."""
+    fila = Cultivo(codigo=c["codigo"], **_valores_cultivo(c), actualizado_en=momento)
+    if c.get("ficha_tecnica"):
+        fila.ficha = FichaTecnica(**_valores_ficha(c["ficha_tecnica"]), actualizado_en=momento)
+    db.add(fila)
+
+
+def _cultivo_existente(fila: Cultivo, c: dict, momento, forzar: bool) -> str:
+    """Decide qué hacer con un cultivo que ya está en la base y devuelve lo que hizo.
+
+    - forzar=True: reemplaza todo con lo del JSON ("reemplazado").
+    - Sin forzar: respeta lo que el administrador cambió desde la aplicación (AD-04). Solo agrega lo que falta:
+      la ficha técnica completa si no existe, o los datos de la proyección si la ficha no los tiene ("completado").
+      Si no falta nada, no toca la fila ("sin_cambios"), así la fecha del catálogo no cambia y los teléfonos
+      no vuelven a descargarlo.
+    """
+    ficha_json = c.get("ficha_tecnica")
+    if forzar:
+        _aplicar(fila, _valores_cultivo(c))
+        if ficha_json and fila.ficha is not None:
+            _aplicar(fila.ficha, _valores_ficha(ficha_json))
+            fila.ficha.actualizado_en = momento
+        elif ficha_json:
+            fila.ficha = FichaTecnica(**_valores_ficha(ficha_json), actualizado_en=momento)
+        fila.actualizado_en = momento
+        return "reemplazados"
+    if ficha_json and fila.ficha is None:
+        fila.ficha = FichaTecnica(**_valores_ficha(ficha_json), actualizado_en=momento)
+    elif ficha_json and _sin_proyeccion(fila.ficha) and _valores_proyeccion(ficha_json):
+        _aplicar(fila.ficha, _valores_proyeccion(ficha_json))
+        fila.ficha.actualizado_en = momento
+    else:
+        return "sin_cambios"
+    fila.actualizado_en = momento
+    return "completados"
+
+
+def cargar_semilla(db, ruta: str | None = None, forzar: bool = False) -> dict:
+    """Carga el catálogo inicial de cultivos (datos/semilla_catalogo.json) y devuelve cuántos cultivos quedaron en cada caso.
+
+    Se ejecuta en cada despliegue de Render, por eso no debe borrar el trabajo del administrador:
+    los cultivos nuevos se insertan, los existentes solo se completan y nunca se sobrescriben,
+    salvo que se pida a propósito con --forzar (por ejemplo, para volver a los valores de referencia).
+    """
     ruta = ruta or os.path.join(RAIZ, "semilla_catalogo.json")
     with open(ruta, encoding="utf-8") as f:
         datos = json.load(f)
     lista = datos["cultivos"] if isinstance(datos, dict) else datos
     momento = seguridad.ahora().replace(microsecond=0)
+    conteo = {"nuevos": 0, "completados": 0, "reemplazados": 0, "sin_cambios": 0}
     for c in lista:
         fila = db.scalar(select(Cultivo).where(Cultivo.codigo == c["codigo"]))
-        valores = dict(nombre=c["nombre"], unidad_comercial=c["unidad_comercial"], distancia_min_m=c["distancia_min_m"],
-                       distancia_max_m=c["distancia_max_m"], marcos_permitidos=c["marcos_permitidos"],
-                       fuente_tecnica=c["fuente_tecnica"], actualizado_en=momento)
         if fila is None:
-            fila = Cultivo(codigo=c["codigo"], **valores)
-            db.add(fila)
+            _cultivo_nuevo(db, c, momento)
+            conteo["nuevos"] += 1
         else:
-            for k, val in valores.items():
-                setattr(fila, k, val)
-        ficha = c.get("ficha_tecnica")
-        if ficha:
-            campos = {k: ficha[k] for k in ("base_plantas", "costo_hoyado_cop", "costo_colino_cop", "insumo_anual_cop",
-                                            "jornales_limpieza_anio", "jornales_riego_anio", "datos_extra")}
-            if fila.ficha is None:
-                fila.ficha = FichaTecnica(**campos, actualizado_en=momento)
-            else:
-                for k, val in campos.items():
-                    setattr(fila.ficha, k, val)
-                fila.ficha.actualizado_en = momento
+            conteo[_cultivo_existente(fila, c, momento, forzar)] += 1
     db.commit()
-    return len(lista)
+    return conteo
 
 
 def _fecha(texto_fecha):
+    """Convierte un texto AAAA-MM-DD del archivo de datos de prueba en fecha; un valor vacío queda como None."""
     return date.fromisoformat(texto_fecha) if texto_fecha else None
 
 
 def _uid(clave):
+    """Identificador UUID estable a partir del código de la tabla del documento 19 (por ejemplo 'U-01'):
+    siempre da el mismo UUID, así los datos de prueba se pueden cargar varias veces sin duplicarse.
+    """
     return str(uuid.uuid5(uuid.NAMESPACE_URL, "sembrando-futuro/" + clave))
 
 
@@ -118,6 +197,9 @@ def _cargar_usuarios(db, lista, ahora) -> dict:
 
 
 def _agregar_otp(db, id_tabla, fila, ahora, creado) -> None:
+    """Agrega el código de verificación de una cuenta de prueba pendiente (el código fijo de pruebas),
+    con la hora de envío y los reenvíos que describe el documento 19 para cada caso.
+    """
     reenvios = 3 if id_tabla == "U-05" else 0
     # U-02: código vigente (enviado hace 1 minuto); U-05: enviado hace 5 minutos; U-03: enviado al crear la cuenta (hace 25 h)
     enviado = {"U-02": ahora - timedelta(minutes=1), "U-05": ahora - timedelta(minutes=5)}.get(id_tabla, creado)
@@ -127,6 +209,7 @@ def _agregar_otp(db, id_tabla, fila, ahora, creado) -> None:
 
 
 def _cargar_fincas_y_ciclos(db, d, usuarios, marca) -> None:
+    """Crea las fincas y los ciclos de prueba que aún no existen, con el área efectiva calculada por la fórmula del dominio."""
     for f in d["fincas"]:
         dueno = usuarios.get(f.get("usuario")) or db.get(Usuario, _uid(f.get("usuario", "U-01")))
         if dueno is None or db.get(Finca, _uid(f["id"])):
@@ -146,6 +229,7 @@ def _cargar_fincas_y_ciclos(db, d, usuarios, marca) -> None:
 
 
 def _cargar_ciclo_cultivos(db, lista, cultivos, marca) -> None:
+    """Asocia a cada ciclo de prueba sus cultivos, con el marco de siembra y las distancias."""
     for k in lista:
         if not db.get(CicloCultivo, _uid(k["id"])):
             db.add(CicloCultivo(id_ciclo_cultivo=_uid(k["id"]), id_ciclo=_uid(k["ciclo"]),
@@ -155,6 +239,7 @@ def _cargar_ciclo_cultivos(db, lista, cultivos, marca) -> None:
 
 
 def _cargar_movimientos(db, d, cultivos, marca) -> None:
+    """Crea los gastos, jornales e ingresos de prueba que aún no existen."""
     for g in d["gastos"]:
         if not db.get(Gasto, _uid(g["id"])):
             db.add(Gasto(id_gasto=_uid(g["id"]), id_ciclo=_uid(g["ciclo"]), categoria=g["categoria"],
@@ -220,6 +305,7 @@ def _ejecutar(funcion, *args):
 
 
 def _cmd_crear_admin(db, a):
+    """Comando crear_admin: pide el correo (o --correo) y la clave sin mostrarla (o la variable ADMIN_CLAVE)."""
     correo = a.correo or input("Correo del administrador: ")
     clave = os.getenv("ADMIN_CLAVE") or getpass.getpass("Clave (no se muestra): ")
     crear_admin(db, correo, clave)
@@ -227,6 +313,7 @@ def _cmd_crear_admin(db, a):
 
 
 def _cmd_listar_cuentas(db, a):
+    """Comando listar_cuentas: muestra correo, estado, nombre y fecha de creación de las cuentas de agricultores."""
     lista = admin_service.listar(db, a.estado, 1, 100)
     for u in lista["usuarios"]:
         print(f'{u["correo"]}\t{u["estado"]}\t{u["nombre"]}\t{u["creado_en"]}')
@@ -234,11 +321,13 @@ def _cmd_listar_cuentas(db, a):
 
 
 def _cmd_resumen_cuenta(db, a):
+    """Comando resumen_cuenta: muestra las fincas y los conteos de registros de una cuenta (lo mismo que AD-05)."""
     r = _ejecutar(admin_service.resumen, db, _cuenta(db, a.correo).id_usuario)
     print(json.dumps(r, ensure_ascii=False, indent=2))
 
 
 def _cmd_cambiar_clave(db, a):
+    """Comando cambiar_clave: cambia la clave de un agricultor y cierra todas sus sesiones (lo mismo que AD-02)."""
     usuario = _cuenta(db, a.correo)
     clave = os.getenv("CLAVE_NUEVA") or getpass.getpass("Clave nueva (no se muestra): ")
     _ejecutar(admin_service.cambiar_clave, db, usuario.id_usuario, clave)
@@ -246,13 +335,14 @@ def _cmd_cambiar_clave(db, a):
 
 
 def _cmd_eliminar_cuenta(db, a):
+    """Comando eliminar_cuenta: borra la cuenta y todos sus datos (lo mismo que AD-03; no aplica al administrador)."""
     _ejecutar(admin_service.eliminar, db, _cuenta(db, a.correo).id_usuario)
     print("Cuenta eliminada con todos sus datos.")
 
 
 COMANDOS = {
     "crear_admin": _cmd_crear_admin,
-    "cargar_semilla": lambda db, a: print(f"{cargar_semilla(db, a.archivo)} cultivos cargados."),
+    "cargar_semilla": lambda db, a: print("Catálogo:", cargar_semilla(db, a.archivo, a.forzar)),
     "cargar_prueba": lambda db, a: print("Datos de prueba cargados:", cargar_prueba(db, a.archivo, a.restablecer)),
     "listar_cuentas": _cmd_listar_cuentas,
     "resumen_cuenta": _cmd_resumen_cuenta,
@@ -265,11 +355,13 @@ COMANDOS = {
 
 
 def main(argv=None) -> int:
+    """Punto de entrada de la consola: lee el comando y sus opciones, abre una sesión de base de datos y ejecuta el comando."""
     ap = argparse.ArgumentParser(prog="python -m app.cli", description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     ap.add_argument("comando", choices=list(COMANDOS))
     ap.add_argument("--correo")
     ap.add_argument("--estado", choices=["ACTIVA", "PENDIENTE"], help="filtro de listar_cuentas")
     ap.add_argument("--restablecer", action="store_true", help="con cargar_prueba: borra antes las cuentas de prueba")
+    ap.add_argument("--forzar", action="store_true", help="con cargar_semilla: reemplaza el catálogo con los valores del archivo")
     ap.add_argument("--archivo", help="ruta alterna del JSON para cargar_semilla o cargar_prueba")
     a = ap.parse_args(argv)
     with connection.SessionLocal() as db:

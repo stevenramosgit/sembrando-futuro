@@ -8,6 +8,10 @@ from app.database.connection import Base
 
 
 class Usuario(Base):
+    """Fila de la tabla USUARIO: agricultor o administrador. Guarda el correo en minúsculas, el hash Argon2 de la clave,
+    el estado (PENDIENTE hasta verificar el código, luego ACTIVA), los intentos fallidos, el bloqueo temporal y la autorización
+    de tratamiento de datos (Ley 1581 de 2012).
+    """
     __tablename__ = "usuario"
     __table_args__ = (UniqueConstraint("solo_admin", name="uq_usuario_un_solo_admin"),)
 
@@ -32,6 +36,9 @@ class Usuario(Base):
 
 
 class Otp(Base):
+    """Fila de la tabla OTP: código de verificación enviado por correo. Solo se guarda su huella; vence a los 15 minutos,
+    admite 5 intentos y cuenta los reenvíos (máximo 3).
+    """
     __tablename__ = "otp"
 
     id_otp: Mapped[str] = mapped_column(String(36), primary_key=True)
@@ -48,6 +55,9 @@ class Otp(Base):
 
 
 class Token(Base):
+    """Fila de la tabla TOKEN: sesión (30 días) o activación (24 horas). Solo se guarda la huella del token;
+    cerrar sesión o cambiar la clave lo marca como revocado.
+    """
     __tablename__ = "token"
 
     id_token: Mapped[str] = mapped_column(String(36), primary_key=True)

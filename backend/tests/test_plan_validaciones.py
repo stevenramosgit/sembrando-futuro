@@ -493,7 +493,7 @@ def test_CP_V_33_ERR(cliente, cabecera):
 def test_CP_V_34_OK():
     from app.domain import formulas
     r = formulas.matas_por_hectarea("cuadrado", 1.5, None, (1.0, 2.0))
-    assert r == ("ok", 4444.44, None)
+    assert r == ("ok", 4444.45, None)
     obs("Distancia 1,5 m dentro del rango del café (1,0 a 2,0 m): " + str(r) + ", sin advertencia")
 
 

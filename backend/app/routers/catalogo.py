@@ -1,3 +1,4 @@
+"""Servicio C-01: catálogo de cultivos con sus fichas técnicas (público, sin sesión)."""
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
@@ -14,6 +15,7 @@ router = APIRouter(tags=["Catálogo"])
             responses={304: {"description": "El catálogo no cambió"}},
             dependencies=[Depends(limitar("C-01", "LIMITE_GENERAL"))])
 def catalogo(desde: str | None = None, db: Session = Depends(get_db)):
+    """C-01: entrega el catálogo. Con 'desde' solo devuelve lo que cambió después de esa fecha; si no cambió nada responde 304."""
     resultado = catalogo_service.consultar(db, desde)
     if resultado is None:
         return Response(status_code=304)

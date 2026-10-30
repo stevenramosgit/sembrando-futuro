@@ -1,3 +1,4 @@
+"""Servicio R-01: resumen financiero de un ciclo, calculado en el servidor con las mismas fórmulas del teléfono."""
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -13,4 +14,5 @@ router = APIRouter(prefix="/ciclos", tags=["Ciclo"])
 @router.get("/{id}/resumen", response_model=ResumenCiclo, summary="R-01 Resumen de un ciclo",
             dependencies=[Depends(limitar("R-01", "LIMITE_GENERAL"))])
 def resumen(id: str, usuario=Depends(usuario_actual), db: Session = Depends(get_db)):
+    """R-01: matas por cultivo, gastos, jornales, ingresos, utilidad, rentabilidad y proyección de cosecha de un ciclo del usuario."""
     return resumen_service.resumen_ciclo(db, usuario, id)

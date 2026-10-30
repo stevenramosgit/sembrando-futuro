@@ -25,10 +25,14 @@ def ahora() -> datetime:
 
 
 def hashear_clave(clave: str) -> str:
+    """Devuelve el hash Argon2 de la clave (incluye sal aleatoria); la clave nunca se guarda en claro."""
     return _hasher.hash(clave)
 
 
 def verificar_clave(clave: str, hash_guardado: str | None) -> bool:
+    """Compara una clave con su hash. Si la cuenta no existe se verifica contra un hash falso para que el tiempo de
+    respuesta no revele si el correo está registrado.
+    """
     try:
         return _hasher.verify(hash_guardado or _HASH_FALSO, clave) and hash_guardado is not None
     except (VerifyMismatchError, InvalidHashError):
@@ -41,29 +45,35 @@ def _huella(valor: str) -> str:
 
 
 def hash_token(token: str) -> str:
+    """Huella del token de sesión o de activación; en la base solo se guarda esta huella, nunca el token."""
     return _huella("token:" + token)
 
 
 def hash_otp(codigo: str) -> str:
+    """Huella del código de verificación de 6 dígitos; en la base solo se guarda esta huella."""
     return _huella("otp:" + codigo)
 
 
 def generar_token() -> str:
+    """Token opaco aleatorio con el prefijo tkn_ (no contiene datos del usuario)."""
     return "tkn_" + secrets.token_urlsafe(32)
 
 
 def generar_codigo_otp() -> str:
+    """Código aleatorio de 6 dígitos (100000 a 999999). Solo en el entorno de pruebas es el código fijo, para automatizarlas."""
     if config.entorno == "pruebas":
         return config.otp_fijo_pruebas
     return f"{secrets.randbelow(900000) + 100000}"
 
 
 def expira_token(tipo: str) -> datetime:
+    """Fecha de vencimiento: la sesión dura TOKEN_DIAS días (30 por defecto) y el token de activación 24 horas."""
     return ahora() + (timedelta(days=config.token_dias) if tipo == "SESION" else timedelta(hours=24))
 
 
 # ---------------------------------------------------------------- dependencias de FastAPI
 def _token_de(authorization: str | None) -> str:
+    """Saca el token de la cabecera 'Authorization: Bearer ...'; si falta o está mal formada responde 401 (V-46)."""
     if not authorization or not authorization.lower().startswith("bearer "):
         raise ErrorApi(401, "V-46")
     token = authorization[7:].strip()
@@ -73,6 +83,7 @@ def _token_de(authorization: str | None) -> str:
 
 
 def _buscar_token(db: Session, authorization: str | None, tipo: str):
+    """Busca el token por su huella y comprueba que sea del tipo pedido, no esté revocado ni vencido; si no, 401 (V-46)."""
     from app.models.usuario import Token
 
     token = _token_de(authorization)
@@ -88,10 +99,12 @@ def token_actual(authorization: str | None = Header(default=None), db: Session =
 
 
 def usuario_actual(authorization: str | None = Header(default=None), db: Session = Depends(get_db)):
+    """Dependencia de FastAPI: el usuario dueño de la sesión. La usan todos los servicios que exigen ingresar."""
     return _buscar_token(db, authorization, "SESION").usuario
 
 
 def exigir_admin(usuario=Depends(usuario_actual)):
+    """Dependencia de FastAPI: deja pasar solo al rol ADMIN; un agricultor recibe 403 (E-06)."""
     if usuario.rol != "ADMIN":
         raise ErrorApi(403, "E-06")
     return usuario

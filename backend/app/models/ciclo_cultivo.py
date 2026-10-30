@@ -10,6 +10,9 @@ from app.models.tipos import FechaHora6
 
 
 class CicloCultivo(Base):
+    """Fila de la tabla CICLO_CULTIVO: un cultivo sembrado en un ciclo, con su marco (cuadrado, rectangular o tresbolillo)
+    y las distancias en metros. Con estos datos se calculan las matas del ciclo; las matas no se guardan, se calculan.
+    """
     __tablename__ = "ciclo_cultivo"
     __table_args__ = (UniqueConstraint("id_ciclo", "id_cultivo", name="uq_ciclo_cultivo"),)
 

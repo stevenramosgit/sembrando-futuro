@@ -13,8 +13,8 @@ down_revision = None
 branch_labels = None
 depends_on = None
 
-# DATETIME con fracciones de segundo en MariaDB/MySQL (los registros sincronizables comparan updated_at al milisegundo)
-FECHA_HORA_6 = sa.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql", "mariadb")
+# DATETIME con fracciones de segundo en MySQL (los registros sincronizables comparan updated_at al milisegundo)
+FECHA_HORA_6 = sa.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql")
 CASCADA = dict(ondelete="CASCADE", onupdate="RESTRICT")
 RESTRINGIR = dict(ondelete="RESTRICT", onupdate="RESTRICT")
 

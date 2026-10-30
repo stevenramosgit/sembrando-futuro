@@ -39,14 +39,14 @@ def test_CB_04():
 
 def test_CB_05():
     r = densidad("cuadrado", 1.5)
-    assert r == ("ok", 4444.44, None)
-    obs(f"Camino 1-2-3-6-7-9-10-11-13: cuadrado 1,5 m dentro del rango → {r}: 4.444,44 matas/ha sin advertencia")
+    assert r == ("ok", 4444.45, None)
+    obs(f"Camino 1-2-3-6-7-9-10-11-13: cuadrado 1,5 m dentro del rango → {r}: 4.444,45 matas/ha (hacia arriba) sin advertencia")
 
 
 def test_CB_06():
     r = densidad("tresbolillo", 1.5)
-    assert r == ("ok", 5132.0, None)
-    obs(f"Camino 1-2-3-6-8-9-10-11-13: tresbolillo 1,5 m → {r}: 5.132,00 matas/ha sin advertencia")
+    assert r == ("ok", 5132.01, None)
+    obs(f"Camino 1-2-3-6-8-9-10-11-13: tresbolillo 1,5 m → {r}: 5.132,01 matas/ha (hacia arriba) sin advertencia")
 
 
 def test_CB_07():

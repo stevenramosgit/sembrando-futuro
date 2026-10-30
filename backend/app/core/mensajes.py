@@ -27,7 +27,7 @@ MENSAJES = {
     'V-25': 'La pendiente debe estar entre 0 y 100 %.',
     'V-26': 'El área no sembrable debe ser menor que el área bruta.',
     'V-27': 'Seleccione un cultivo.',
-    'V-28': 'Escriba una fecha válida (día/mes/año).',
+    'V-28': 'Elija una fecha válida del calendario.',
     'V-29': 'La fecha de cierre no puede ser anterior a la de siembra ni posterior a hoy.',
     'V-30': 'Este ciclo no tiene ingresos. ¿Desea cerrarlo de todos modos?',
     'V-31': 'Este ciclo está cerrado y no admite nuevos registros.',

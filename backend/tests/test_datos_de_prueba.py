@@ -1,4 +1,5 @@
 """Datos de prueba del documento 19 y comandos de mantenimiento (limpiar_*)."""
+import os
 from datetime import timedelta
 
 from sqlalchemy import select
@@ -80,8 +81,9 @@ def test_limpiar_bloqueos_y_vencidos(db):
 
 
 def test_cargar_semilla_actualiza_sin_duplicar(db):
-    assert cli.cargar_semilla(db) == 3
-    assert cli.cargar_semilla(db) == 3
+    # La base de cada prueba ya tiene la semilla: volver a cargarla no duplica ni cambia nada.
+    assert cli.cargar_semilla(db) == {"nuevos": 0, "completados": 0, "reemplazados": 0, "sin_cambios": 3}
+    assert cli.cargar_semilla(db)["sin_cambios"] == 3
     from app.models import Cultivo, FichaTecnica
     assert len(list(db.scalars(select(Cultivo)))) == 3 and len(list(db.scalars(select(FichaTecnica)))) == 3
 
@@ -90,3 +92,54 @@ def test_cli_crear_admin_por_linea_de_comandos(db, monkeypatch):
     monkeypatch.setenv("ADMIN_CLAVE", "Cafe#Cauca2026")
     assert cli.main(["crear_admin", "--correo", "admin.proyecto@correo.com"]) == 0
     assert db.scalar(select(Usuario).where(Usuario.rol == "ADMIN")).correo == "admin.proyecto@correo.com"
+
+
+def test_cargar_semilla_respeta_los_cambios_del_administrador(db):
+    """Render ejecuta cargar_semilla en cada despliegue: lo que el administrador cambió con AD-04 no se pierde."""
+    from app.models import Cultivo
+    cafe = db.scalar(select(Cultivo).where(Cultivo.codigo == "CAFE"))
+    cafe.distancia_min_m, cafe.ficha.precio_ref_cop = 1.2, 2500000
+    fecha = cafe.actualizado_en
+    db.commit()
+    cli.cargar_semilla(db)
+    db.refresh(cafe)
+    assert float(cafe.distancia_min_m) == 1.2 and cafe.ficha.precio_ref_cop == 2500000
+    assert cafe.actualizado_en == fecha  # sin cambios: los teléfonos no vuelven a descargar el catálogo
+
+
+def test_cargar_semilla_forzar_vuelve_a_los_valores_del_archivo(db):
+    from app.models import Cultivo
+    cafe = db.scalar(select(Cultivo).where(Cultivo.codigo == "CAFE"))
+    cafe.ficha.precio_ref_cop = 1
+    db.commit()
+    assert cli.cargar_semilla(db, forzar=True)["reemplazados"] == 3
+    db.refresh(cafe)
+    assert cafe.ficha.precio_ref_cop == 2220000
+
+
+def test_cargar_semilla_completa_la_proyeccion_que_falta(db):
+    """Una ficha creada antes de la migración 0002 no tiene proyección: la semilla la completa sin tocar los costos."""
+    from app.models import Cultivo
+    yuca = db.scalar(select(Cultivo).where(Cultivo.codigo == "YUCA"))
+    yuca.ficha.meses_primera_cosecha = yuca.ficha.produccion_base = yuca.ficha.precio_ref_cop = None
+    yuca.ficha.cosecha_unica = False
+    yuca.ficha.costo_colino_cop = 999
+    db.commit()
+    assert cli.cargar_semilla(db)["completados"] == 1
+    db.refresh(yuca)
+    assert yuca.ficha.meses_primera_cosecha == 10 and yuca.ficha.cosecha_unica is True
+    assert yuca.ficha.precio_ref_cop == 68250 and yuca.ficha.costo_colino_cop == 999
+
+
+def test_cargar_semilla_inserta_un_cultivo_nuevo(db, tmp_path):
+    import json
+    from app.models import Cultivo
+    ruta = os.path.join(cli.RAIZ, "semilla_catalogo.json")
+    with open(ruta, encoding="utf-8") as f:
+        datos = json.load(f)
+    lista = datos["cultivos"] if isinstance(datos, dict) else datos
+    nuevo = dict(lista[0], codigo="CACAO", nombre="Cacao")
+    archivo = tmp_path / "semilla.json"
+    archivo.write_text(json.dumps({"cultivos": lista + [nuevo]}), encoding="utf-8")
+    assert cli.cargar_semilla(db, str(archivo))["nuevos"] == 1
+    assert db.scalar(select(Cultivo).where(Cultivo.codigo == "CACAO")).ficha is not None
