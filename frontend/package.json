@@ -1,0 +1,16 @@
+{
+  "name": "sembrando-futuro-frontend",
+  "private": true,
+  "type": "module",
+  "description": "PWA Sembrando Futuro (sin paso de compilación: JavaScript de módulos que FastAPI sirve tal cual).",
+  "scripts": {
+    "test": "node --test",
+    "test:cov": "node --test --experimental-test-coverage",
+    "lint": "eslint src",
+    "test:e2e": "node pruebas/e2e.cjs"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "playwright": "^1.48.0"
+  }
+}
